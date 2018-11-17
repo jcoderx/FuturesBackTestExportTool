@@ -1,0 +1,207 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{B2B95266-A9D4-4D44-88D6-23AE1C48D42D}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>FuturesBackTestExportTool</RootNamespace>
+    <AssemblyName>期货回测导出工具</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>xiede.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI, Version=2.3.0.0, Culture=neutral, PublicKeyToken=0df73ec7942b34e1, processorArchitecture=MSIL">
+      <HintPath>..\packages\NPOI.2.3.0\lib\net20\NPOI.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI.OOXML, Version=2.3.0.0, Culture=neutral, PublicKeyToken=0df73ec7942b34e1, processorArchitecture=MSIL">
+      <HintPath>..\packages\NPOI.2.3.0\lib\net20\NPOI.OOXML.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI.OpenXml4Net, Version=2.3.0.0, Culture=neutral, PublicKeyToken=0df73ec7942b34e1, processorArchitecture=MSIL">
+      <HintPath>..\packages\NPOI.2.3.0\lib\net20\NPOI.OpenXml4Net.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI.OpenXmlFormats, Version=2.3.0.0, Culture=neutral, PublicKeyToken=0df73ec7942b34e1, processorArchitecture=MSIL">
+      <HintPath>..\packages\NPOI.2.3.0\lib\net20\NPOI.OpenXmlFormats.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="UIAutomationClient" />
+    <Reference Include="UIAutomationClientsideProviders" />
+    <Reference Include="UIAutomationProvider" />
+    <Reference Include="UIAutomationTypes" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ExcelExport.cs" />
+    <Compile Include="Form1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form1.Designer.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormAddCustomCycle.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormAddCustomCycle.Designer.cs">
+      <DependentUpon>FormAddCustomCycle.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormChooseCategory.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormChooseCategory.Designer.cs">
+      <DependentUpon>FormChooseCategory.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormChooseClient.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormChooseClient.Designer.cs">
+      <DependentUpon>FormChooseClient.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormChooseCycle.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormChooseCycle.Designer.cs">
+      <DependentUpon>FormChooseCycle.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormChooseModel.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormChooseModel.Designer.cs">
+      <DependentUpon>FormChooseModel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormChooseSupplyDataParams.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormChooseSupplyDataParams.Designer.cs">
+      <DependentUpon>FormChooseSupplyDataParams.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormChooseTime.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormChooseTime.Designer.cs">
+      <DependentUpon>FormChooseTime.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormFuturesChooseVariety.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormFuturesChooseVariety.Designer.cs">
+      <DependentUpon>FormFuturesChooseVariety.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormMain.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormMain.Designer.cs">
+      <DependentUpon>FormMain.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Model\Exchange.cs" />
+    <Compile Include="Model\ModelCategory.cs" />
+    <Compile Include="Model\TimeCycle.cs" />
+    <Compile Include="Model\Variety.cs" />
+    <Compile Include="MouseEventFlag.cs" />
+    <Compile Include="Page\BackTestReportPage.cs" />
+    <Compile Include="Page\BeComputingPage .cs" />
+    <Compile Include="Page\CustomCyclePage.cs" />
+    <Compile Include="Page\FuturesAnalysisPage.cs" />
+    <Compile Include="Page\StartingEndingTimePage.cs" />
+    <Compile Include="Page\SupplyDataPage.cs" />
+    <Compile Include="Page\WH8MainPage.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ReportModel\CycleReport.cs" />
+    <Compile Include="ReportModel\ModelReport.cs" />
+    <Compile Include="ReportModel\VarietyReport.cs" />
+    <Compile Include="SimulateMouseOperating.cs" />
+    <Compile Include="SimulateOperating.cs" />
+    <Compile Include="ThreeStateTreeview.cs" />
+    <Compile Include="Utils.cs" />
+    <Compile Include="WindowsApi.cs" />
+    <Compile Include="WindowsApiUtils.cs" />
+    <EmbeddedResource Include="Form1.resx">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormAddCustomCycle.resx">
+      <DependentUpon>FormAddCustomCycle.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormChooseCategory.resx">
+      <DependentUpon>FormChooseCategory.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormChooseClient.resx">
+      <DependentUpon>FormChooseClient.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormChooseCycle.resx">
+      <DependentUpon>FormChooseCycle.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormChooseModel.resx">
+      <DependentUpon>FormChooseModel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormChooseSupplyDataParams.resx">
+      <DependentUpon>FormChooseSupplyDataParams.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormChooseTime.resx">
+      <DependentUpon>FormChooseTime.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormFuturesChooseVariety.resx">
+      <DependentUpon>FormFuturesChooseVariety.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormMain.resx">
+      <DependentUpon>FormMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="xiede.ico" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
