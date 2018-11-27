@@ -69,6 +69,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "请选择品种（期货）";
             this.Load += new System.EventHandler(this.FormFuturesChooseVariety_Load);
+            this.Shown += new System.EventHandler(this.FormFuturesChooseVariety_Shown);
             this.ResumeLayout(false);
 
         }

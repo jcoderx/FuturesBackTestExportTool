@@ -180,10 +180,6 @@ namespace FuturesBackTestExportTool
                     modelCategoryNode.Nodes.Add(model);
                 }
             }
-
-            this.TopMost = true;
-            Thread.Sleep(100);
-            this.TopMost = false;
         }
 
         private void buttonNext_Click(object sender, EventArgs e)
@@ -236,6 +232,12 @@ namespace FuturesBackTestExportTool
         {
             this.TopMost = true;
             MessageBox.Show(message);
+            this.TopMost = false;
+        }
+
+        private void FormChooseModel_Shown(object sender, EventArgs e)
+        {
+            this.TopMost = true;
             this.TopMost = false;
         }
     }

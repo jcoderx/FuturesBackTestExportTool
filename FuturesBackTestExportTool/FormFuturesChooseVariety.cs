@@ -161,9 +161,6 @@ namespace FuturesBackTestExportTool
                 }
                 this.treeviewExchange.Nodes.Add(exchangeNode);
             }
-            this.TopMost = true;
-            Thread.Sleep(1000);
-            this.TopMost = false;
         }
 
         private void buttonNext_Click(object sender, EventArgs e)
@@ -243,6 +240,12 @@ namespace FuturesBackTestExportTool
         public List<Exchange> getResult()
         {
             return exchanges;
+        }
+
+        private void FormFuturesChooseVariety_Shown(object sender, EventArgs e)
+        {
+            this.TopMost = true;
+            this.TopMost = false;
         }
     }
 }

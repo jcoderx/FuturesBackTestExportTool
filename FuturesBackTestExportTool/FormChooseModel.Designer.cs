@@ -69,6 +69,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "请选择模型";
             this.Load += new System.EventHandler(this.FormChooseModel_Load);
+            this.Shown += new System.EventHandler(this.FormChooseModel_Shown);
             this.ResumeLayout(false);
 
         }
