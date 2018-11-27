@@ -8,8 +8,10 @@
         public string startingDate;
         //信号计算结束时间
         public string endingDate;
-        //模型名称
+        //模型名称(期望)
         public string modelName;
+        //实际模型名称（报表中导出的）
+        public string realisticModelName;
         //信号个数
         public string signalNumber;
         //最终权益

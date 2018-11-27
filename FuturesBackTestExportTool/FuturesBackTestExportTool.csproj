@@ -64,7 +64,16 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FormChooseGraduallyBackTest.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormChooseGraduallyBackTest.Designer.cs">
+      <DependentUpon>FormChooseGraduallyBackTest.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Page\HintPage.cs" />
     <Compile Include="Page\SupplyDataHintPage.cs" />
+    <Compile Include="Page\TechnicalIndicatorPage.cs" />
+    <Compile Include="Page\WarningPage.cs" />
     <Compile Include="WarningCode.cs" />
     <Compile Include="ExcelExport.cs" />
     <Compile Include="Form1.cs">
@@ -172,6 +181,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FormChooseCycle.resx">
       <DependentUpon>FormChooseCycle.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormChooseGraduallyBackTest.resx">
+      <DependentUpon>FormChooseGraduallyBackTest.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FormChooseModel.resx">
       <DependentUpon>FormChooseModel.cs</DependentUpon>

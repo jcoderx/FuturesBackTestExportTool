@@ -78,6 +78,17 @@ namespace FuturesBackTestExportTool
             return false;
         }
 
+        public static bool isItemSelected(AutomationElement ae)
+        {
+            object temp;
+            if (ae.TryGetCurrentPattern(SelectionItemPattern.Pattern, out temp))
+            {
+                SelectionItemPattern pattern = temp as SelectionItemPattern;
+                return pattern.Current.IsSelected;
+            }
+            return false;
+        }
+
         public static bool expandComboBoxItem(AutomationElement ae)
         {
             object temp;

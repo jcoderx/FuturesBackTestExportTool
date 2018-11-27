@@ -23,6 +23,7 @@ namespace FuturesBackTestExportTool
         private List<ModelCategory> modelCategories;//模型
         private List<TimeCycle> cycles;//周期
         private DateTime[] startingEndingDate;//起止时间
+        private bool isGraduallyBackTest;//是否逐笔回测
 
         public FormMain()
         {
@@ -64,12 +65,17 @@ namespace FuturesBackTestExportTool
                                     if (formChooseTime.ShowDialog() == DialogResult.OK)
                                     {
                                         startingEndingDate = formChooseTime.getResult();
-                                        // 开始回测
-                                        while (this.dataGridViewResult.Rows.Count != 0)
+                                        FormChooseGraduallyBackTest formChooseGraduallyBackTest = new FormChooseGraduallyBackTest();
+                                        if (formChooseGraduallyBackTest.ShowDialog() == DialogResult.OK)
                                         {
-                                            this.dataGridViewResult.Rows.RemoveAt(0);
+                                            isGraduallyBackTest = formChooseGraduallyBackTest.getResult();
+                                            // 开始回测
+                                            while (this.dataGridViewResult.Rows.Count != 0)
+                                            {
+                                                this.dataGridViewResult.Rows.RemoveAt(0);
+                                            }
+                                            startBackTestFutures();
                                         }
-                                        startBackTestFutures();
                                     }
                                 }
                             }
@@ -214,7 +220,6 @@ namespace FuturesBackTestExportTool
             {
                 if (!backTestSingleCycle(cycle))
                 {
-                    //MessageBox.Show("处理周期失败");
                     return false;
                 }
                 //TODO 容错
@@ -237,16 +242,21 @@ namespace FuturesBackTestExportTool
                         List<string> models = modelCategory.models;
                         foreach (string model in models)
                         {
-                            //Console.WriteLine("模型:" + model);
-                            if (!backTestSingleModel(modelCategory.modelCategoryName, model))
+                            int warningCodeModel;
+                            if (!backTestSingleModel(modelCategory.modelCategoryName, model, out warningCodeModel))
                             {
                                 return false;
                             }
-                            //TODO 容错
-                            waitKLine();
                             ModelReport modelReport = new ModelReport();
                             modelReport.modelName = model;
                             modelReports.Add(modelReport);
+                            //容错，不支持的模型
+                            if (warningCodeModel == WarningCode.WARNING_UNSUPPORTED_MODEL)
+                            {
+                                continue;
+                            }
+                            //容错，尽可能的等待K线绘制完成
+                            waitKLine();
                             //试3次，容错（有时候获取不到报告，报告就一行提示信息）
                             int collectionReportCount = 0;
                             bool collectionReportSuccess = false;
@@ -419,8 +429,9 @@ namespace FuturesBackTestExportTool
         }
 
         //选择模型
-        private bool backTestSingleModel(string modelCategoryName, string model)
+        private bool backTestSingleModel(string modelCategoryName, string model, out int warningCode)
         {
+            warningCode = WarningCode.NO_WARNING;
             Thread.Sleep(500);
             AutomationElement targetWindow = AutomationElement.FromHandle(mainHandle);
             if (targetWindow == null)
@@ -466,6 +477,13 @@ namespace FuturesBackTestExportTool
                             SimulateOperating.selectTreeItem(modelAE);
                             Thread.Sleep(300);
                             SimulateOperating.doubleClick(modelAE);
+
+                            //TODO 判断是否弹出不支持周期对话框
+                            Thread.Sleep(1000);
+                            if (WindowsApiUtils.hasWarningPageAndClose() || WindowsApiUtils.hasHintPageAndClose())
+                            {
+                                warningCode = WarningCode.WARNING_UNSUPPORTED_MODEL;
+                            }
                             return true;
                         }
                     }
@@ -956,47 +974,32 @@ namespace FuturesBackTestExportTool
                 return false;
             }
 
-            int count = 0;
-            while (count < 5)
+
+            int clickReportButtonCount = 0;
+            while (true)
             {
-                count++;
-                Thread.Sleep(3000);
-                /*
-                List<IntPtr> promptPageHandles = WindowsApiUtils.findWindowHandlesByClassTitleExact(CLASS_DIALOG, "提示");
-                if (promptPageHandles != null && promptPageHandles.Count > 0)
+                //不是逐笔回测，最多重试点击“回测报告”按钮5次；是逐笔回测，则死循环一直到成功。
+                if (!isGraduallyBackTest)
                 {
-                    foreach (IntPtr promptPageHandle in promptPageHandles)
+                    clickReportButtonCount++;
+                    if (clickReportButtonCount >= 5)
                     {
-                        WindowsApiUtils.closeWindow(promptPageHandle);
+                        break;
                     }
-                }*/
+                }
+                Thread.Sleep(3000);
                 WindowsApiUtils.clearOtherWindows(mainHandle, null);
 
                 if (!SimulateOperating.clickButton(buttonHuiceBaogao))
                 {
-                    //PageUtils.frontMessageBox(this, "点击主界面“回测报告”按钮失败");
                     continue;
                 }
-
-                //判断是否存在正在计算界面，如果有，则关闭
-                /*
-                List<IntPtr> beComputingPageHandles = WindowsApiUtils.findWindowHandlesByClassTitleExact(CLASS_DIALOG, BeComputingPage.BE_COMPUTING_PAGE_TITLE);
-                if (beComputingPageHandles != null && beComputingPageHandles.Count > 0)
-                {
-                    foreach (IntPtr beComputingPageHandle in beComputingPageHandles)
-                    {
-                        WindowsApiUtils.closeWindow(beComputingPageHandle);
-                    }
-                }*/
                 WindowsApiUtils.clearOtherWindowsByTitle(mainHandle, new List<string> { BackTestReportPage.BACK_TEST_REPORT_PAGE_TITLE });
-
                 List<IntPtr> backTestReportPageHandles = WindowsApiUtils.findWindowHandlesByClassTitleFuzzy(CLASS_DIALOG, BackTestReportPage.BACK_TEST_REPORT_PAGE_TITLE);
                 if (backTestReportPageHandles != null && backTestReportPageHandles.Count > 0)
                 {
                     if (backTestReportPageHandles.Count > 1)
                     {
-                        //PageUtils.frontMessageBox(this, "发现多个“模型回测报告”界面，请关闭多余界面");
-                        //return false;
                         //容错，重新点击回测报告按钮，为了清理多余的界面
                         continue;
                     }
@@ -1032,12 +1035,19 @@ namespace FuturesBackTestExportTool
                         }
                     }
                     WindowsApiUtils.closeWindow(backTestReportPageHandle);
+                    //打开回测报告，没有获取到界面的数据，或者获取的数据小于10行，直接返回，重新设置起止时间
                     if (result == null || result.Count < 10)
                     {
-                        continue;
+                        return false;
                     }
                     fillDataGridView(result);
                     fillModelReport(result, modelReport);
+                    //在设置技术指标中删除该模型
+                    if (openContextMenuAndSelectMenu("设置技术指标"))
+                    {
+                        removeModelInTechnicalIndicatorPage(modelReport.modelName);
+
+                    }
                     return true;
                 }
             }
@@ -1115,6 +1125,9 @@ namespace FuturesBackTestExportTool
                                 break;
                             case "信号计算结束时间":
                                 modelReport.endingDate = rowData[1];
+                                break;
+                            case "模型":
+                                modelReport.realisticModelName = rowData[1];
                                 break;
                             case "信号个数":
                                 modelReport.signalNumber = rowData[1];
@@ -1264,6 +1277,7 @@ namespace FuturesBackTestExportTool
                                                 {
                                                     if (SimulateOperating.selectTreeItem(stockAE))
                                                     {
+                                                        Thread.Sleep(500);
                                                         PropertyCondition condition6 = new PropertyCondition(AutomationElement.AutomationIdProperty, FuturesAnalysisPage.AUTOMATION_ID_BUTTON_OK);
                                                         PropertyCondition condition7 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
                                                         AutomationElement buttonOK = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition6, condition7));
@@ -1745,6 +1759,188 @@ namespace FuturesBackTestExportTool
 
             }
             return true;
+        }
+
+        private bool openContextMenuAndSelectMenu(string menuName)
+        {
+            Thread.Sleep(500);
+            AutomationElement targetWindow = AutomationElement.FromHandle(mainHandle);
+            if (targetWindow == null)
+            {
+                PageUtils.frontMessageBox(this, "未找到“赢智程序化”主界面");
+                return false;
+            }
+            WindowsApiUtils.clearOtherWindows(mainHandle, null);
+            PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, WH8MainPage.AUTOMATION_ID_PANE_MAIN);
+            PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Pane);
+            AutomationElement paneMain = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
+            if (paneMain == null)
+            {
+                PageUtils.frontMessageBox(this, "未找到主界面“K线图”控件");
+                return false;
+            }
+            //容错，右击K线图，弹出菜单
+            List<IntPtr> menuHandles = null;
+            int rightClickCount = 0;
+            while (rightClickCount < 3)
+            {
+                WindowsApiUtils.clearOtherWindows(mainHandle, null);
+                try
+                {
+                    targetWindow.SetFocus();
+                }
+                catch (Exception e)
+                {
+                    continue;
+                }
+                SimulateOperating.rightClickAutomationElement(paneMain);
+                Thread.Sleep(1000);
+
+                menuHandles = WindowsApiUtils.findContextMenuHandles();
+                if (menuHandles == null || menuHandles.Count == 0)
+                {
+                    continue;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            if (menuHandles == null || menuHandles.Count == 0)
+            {
+                PageUtils.frontMessageBox(this, "未找到主界面上下文菜单");
+                return false;
+            }
+            IntPtr menuHandle = menuHandles[0];
+            AutomationElement menuAE = AutomationElement.FromHandle(menuHandle);
+            if (menuAE == null)
+            {
+                PageUtils.frontMessageBox(this, "未找到主界面上下文菜单");
+                return false;
+            }
+            Condition condition2 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.MenuItem);
+            AutomationElementCollection menuItemElementCollection = menuAE.FindAll(TreeScope.Children, condition2);
+            if (menuItemElementCollection == null || menuItemElementCollection.Count == 0)
+            {
+                PageUtils.frontMessageBox(this, "未找到主界面上下文菜单子项");
+                return false;
+            }
+            bool foundSupplyDataMenuItem = false;
+            foreach (AutomationElement menuItemAE in menuItemElementCollection)
+            {
+                if (menuName.Equals(menuItemAE.Current.Name))
+                {
+                    foundSupplyDataMenuItem = true;
+                    if (!SimulateOperating.clickButton(menuItemAE))
+                    {
+                        PageUtils.frontMessageBox(this, "点击主界面上下文菜单中的“补充历史数据”子项失败");
+                        return false;
+                    }
+                    break;
+                }
+            }
+            if (!foundSupplyDataMenuItem)
+            {
+                PageUtils.frontMessageBox(this, "未找到主界面上下文菜单中的“补充历史数据”子项");
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        private void removeModelInTechnicalIndicatorPage(string modelName)
+        {
+            Thread.Sleep(1000);
+            List<IntPtr> technicalIndicatorPageHandles = WindowsApiUtils.findWindowHandlesByClassTitleFuzzy(CLASS_DIALOG, TechnicalIndicatorPage.TECHNICAL_INDICATIOR_PAGE_TITLE);
+            if (technicalIndicatorPageHandles == null || technicalIndicatorPageHandles.Count == 0)
+            {
+                //PageUtils.frontMessageBox(this, "未找到“设置技术指标”界面");
+                return;
+            }
+            IntPtr technicalIndicatorPageHandle = technicalIndicatorPageHandles[0];
+            AutomationElement technicalIndicatorPageWindow = AutomationElement.FromHandle(technicalIndicatorPageHandle);
+            if (technicalIndicatorPageWindow == null)
+            {
+                //PageUtils.frontMessageBox(this, "未找到“设置技术指标”界面");
+                return;
+            }
+            WindowsApiUtils.clearOtherWindows(mainHandle, new List<IntPtr> { technicalIndicatorPageHandle });
+            PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, TechnicalIndicatorPage.AUTOMATION_ID_LISTBOX_MODEL);
+            PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.List);
+            AutomationElement listBoxModel = technicalIndicatorPageWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
+            if (listBoxModel == null)
+            {
+                //PageUtils.frontMessageBox(this, "未找到“设置技术指标”界面中模型列表");
+                return;
+            }
+            Condition condition2 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem);
+            AutomationElementCollection modelElementCollection = listBoxModel.FindAll(TreeScope.Children, condition2);
+            if (modelElementCollection != null && modelElementCollection.Count > 0)
+            {
+                //for test
+                StringBuilder sb = new StringBuilder();
+                foreach (AutomationElement modelAE in modelElementCollection)
+                {
+                    sb.Append(modelAE.Current.Name+",");
+                }
+
+                foreach (AutomationElement modelAE in modelElementCollection)
+                {
+                    if (modelAE.Current.Name.Equals(modelName))
+                    {
+                        if (SimulateOperating.selectTreeItem(modelAE))
+                        {
+                            //TODO 校验是否选择错误
+                            Thread.Sleep(1000);
+                            //bool selected = SimulateOperating.isItemSelected(modelAE);
+                            //Console.WriteLine("是否选中:" + selected);
+                            //if (!selected)
+                            //{
+                            //    MessageBox.Show("选中出错");
+                            //}
+
+                            PropertyCondition condition3 = new PropertyCondition(AutomationElement.AutomationIdProperty, TechnicalIndicatorPage.AUTOMATION_ID_BUTTON_REMOVE);
+                            PropertyCondition condition4 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
+                            AutomationElement buttonRemove = technicalIndicatorPageWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition3, condition4));
+                            SimulateOperating.clickButton(buttonRemove);
+                        }
+                        break;
+                    }
+                }
+                //for test
+                Thread.Sleep(500);
+                Condition condition5 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem);
+                AutomationElementCollection xElementCollection = listBoxModel.FindAll(TreeScope.Children, condition5);
+                if (xElementCollection != null && xElementCollection.Count > 0)
+                {
+                    bool has = false;
+                    foreach (AutomationElement modelAE in xElementCollection)
+                    {
+                        if(modelAE.Current.Name.Equals("K线") || modelAE.Current.Name.Equals("WK"))
+                        {
+                            has = true;
+                        }
+                    }
+                    if (!has)
+                    {
+                        MessageBox.Show("没有WK或K线，检查:"+sb.ToString());
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("空----"+sb.ToString());
+                }
+
+            }
+            Thread.Sleep(500);
+            WindowsApiUtils.closeWindow(technicalIndicatorPageHandle);
+            //PropertyCondition condition5 = new PropertyCondition(AutomationElement.AutomationIdProperty, TechnicalIndicatorPage.AUTOMATION_ID_BUTTON_OK);
+            //PropertyCondition condition6 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
+            //AutomationElement buttonOK = technicalIndicatorPageWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition5, condition6));
+            //SimulateOperating.clickButton(buttonOK);
+            //return true;
         }
     }
 }

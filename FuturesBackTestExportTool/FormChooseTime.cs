@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 
 namespace FuturesBackTestExportTool
@@ -19,7 +13,7 @@ namespace FuturesBackTestExportTool
             InitializeComponent();
         }
 
-        private void buttonBackTest_Click(object sender, EventArgs e)
+        private void buttonNext_Click(object sender, EventArgs e)
         {
             dtStarting = this.dateTimePickerStarting.Value;
             dtEnding = this.dateTimePickerEnding.Value;

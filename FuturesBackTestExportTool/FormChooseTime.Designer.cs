@@ -29,24 +29,24 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormChooseTime));
-            this.buttonBackTest = new System.Windows.Forms.Button();
+            this.buttonNext = new System.Windows.Forms.Button();
             this.dateTimePickerEnding = new System.Windows.Forms.DateTimePicker();
             this.dateTimePickerStarting = new System.Windows.Forms.DateTimePicker();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
-            // buttonBackTest
+            // buttonNext
             // 
-            this.buttonBackTest.Font = new System.Drawing.Font("宋体", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.buttonBackTest.ForeColor = System.Drawing.Color.Red;
-            this.buttonBackTest.Location = new System.Drawing.Point(183, 74);
-            this.buttonBackTest.Name = "buttonBackTest";
-            this.buttonBackTest.Size = new System.Drawing.Size(87, 31);
-            this.buttonBackTest.TabIndex = 9;
-            this.buttonBackTest.Text = "开始回测";
-            this.buttonBackTest.UseVisualStyleBackColor = true;
-            this.buttonBackTest.Click += new System.EventHandler(this.buttonBackTest_Click);
+            this.buttonNext.Font = new System.Drawing.Font("宋体", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.buttonNext.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.buttonNext.Location = new System.Drawing.Point(106, 81);
+            this.buttonNext.Name = "buttonNext";
+            this.buttonNext.Size = new System.Drawing.Size(75, 23);
+            this.buttonNext.TabIndex = 9;
+            this.buttonNext.Text = "下一步";
+            this.buttonNext.UseVisualStyleBackColor = true;
+            this.buttonNext.Click += new System.EventHandler(this.buttonNext_Click);
             // 
             // dateTimePickerEnding
             // 
@@ -93,7 +93,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(279, 112);
-            this.Controls.Add(this.buttonBackTest);
+            this.Controls.Add(this.buttonNext);
             this.Controls.Add(this.dateTimePickerEnding);
             this.Controls.Add(this.dateTimePickerStarting);
             this.Controls.Add(this.label2);
@@ -112,7 +112,7 @@
 
         #endregion
 
-        private System.Windows.Forms.Button buttonBackTest;
+        private System.Windows.Forms.Button buttonNext;
         private System.Windows.Forms.DateTimePicker dateTimePickerEnding;
         private System.Windows.Forms.DateTimePicker dateTimePickerStarting;
         private System.Windows.Forms.Label label2;

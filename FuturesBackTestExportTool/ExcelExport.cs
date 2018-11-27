@@ -140,69 +140,188 @@ namespace FuturesBackTestExportTool
                                     }
                                     cell.SetCellValue(modelReport.modelName);
 
+                                    //期望模型名称和实际模型名称不一致，则不导出数据
+                                    bool isErrorData = false;
+                                    if (!modelReport.modelName.Equals(modelReport.realisticModelName))
+                                    {
+                                        isErrorData = true;
+                                    }
+
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 1);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.startingDate);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.startingDate);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 2);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.endingDate);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.endingDate);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 3);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.signalNumber);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.signalNumber);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 4);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.lastInterest);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.lastInterest);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 5);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.sharpeRatio);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.sharpeRatio);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 6);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.interestMaxRetracement);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.interestMaxRetracement);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 7);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.interestMaxRetracementRatio);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.interestMaxRetracementRatio);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 8);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.hazardRatio);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.hazardRatio);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 9);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.maxLossPerHand);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.maxLossPerHand);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 10);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.avgProfitLossPerHand);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.avgProfitLossPerHand);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 11);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.winRatio);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.winRatio);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 12);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.score);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.score);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 13);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.maxProfit);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.maxProfit);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 14);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.maxLoss);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.maxLoss);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 15);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.maxContinuousProfitabilityTimes);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.maxContinuousProfitabilityTimes);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 16);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.maxContinuousLossesTimes);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.maxContinuousLossesTimes);
+                                    }
                                 }
                             }
                         }
@@ -302,69 +421,188 @@ namespace FuturesBackTestExportTool
                                     }
                                     cell.SetCellValue(modelReport.modelName);
 
+                                    //期望模型名称和实际模型名称不一致，则不导出数据
+                                    bool isErrorData = false;
+                                    if (!modelReport.modelName.Equals(modelReport.realisticModelName))
+                                    {
+                                        isErrorData = true;
+                                    }
+
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 1);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.startingDate);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.startingDate);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 2);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.endingDate);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.endingDate);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 3);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.signalNumber);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.signalNumber);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 4);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.lastInterest);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.lastInterest);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 5);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.sharpeRatio);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.sharpeRatio);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 6);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.interestMaxRetracement);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.interestMaxRetracement);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 7);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.interestMaxRetracementRatio);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.interestMaxRetracementRatio);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 8);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.hazardRatio);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.hazardRatio);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 9);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.maxLossPerHand);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.maxLossPerHand);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 10);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.avgProfitLossPerHand);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.avgProfitLossPerHand);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 11);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.winRatio);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.winRatio);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 12);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.score);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.score);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 13);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.maxProfit);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.maxProfit);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 14);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.maxLoss);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.maxLoss);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 15);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.maxContinuousProfitabilityTimes);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.maxContinuousProfitabilityTimes);
+                                    }
 
                                     cell = (XSSFCell)row.CreateCell(colStartIndex + 16);
                                     cell.CellStyle = commonStyle;
-                                    cell.SetCellValue(modelReport.maxContinuousLossesTimes);
+                                    if (isErrorData)
+                                    {
+                                        cell.SetCellValue("");
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(modelReport.maxContinuousLossesTimes);
+                                    }
                                 }
                             }
                         }

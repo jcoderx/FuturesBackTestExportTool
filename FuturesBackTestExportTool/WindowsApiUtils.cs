@@ -234,5 +234,59 @@ namespace FuturesBackTestExportTool
             }
             return false;
         }
+
+        public static bool hasWarningPageAndClose()
+        {
+            List<IntPtr> handles = findWindowHandlesByClassTitleFuzzy(CLASS_DIALOG, WarningPage.WARNING_PAGE_TITLE);
+            if (handles != null && handles.Count >= 0)
+            {
+                bool has = false;
+                foreach (IntPtr handle in handles)
+                {
+                    AutomationElement warningPageWindow = AutomationElement.FromHandle(handle);
+                    if (warningPageWindow == null)
+                    {
+                        continue;
+                    }
+                    PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, SupplyDataHintPage.AUTOMATION_ID_LABEL_HINT);
+                    PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Text);
+                    AutomationElement labelMsg = warningPageWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
+                    if (labelMsg != null && !"".Equals(labelMsg.Current.Name))
+                    {
+                        has = true;
+                        closeWindow(handle);
+                    }
+                }
+                return has;
+            }
+            return false;
+        }
+
+        public static bool hasHintPageAndClose()
+        {
+            List<IntPtr> handles = findWindowHandlesByClassTitleFuzzy(CLASS_DIALOG, HintPage.HINT_PAGE_TITLE);
+            if (handles != null && handles.Count >= 0)
+            {
+                bool has = false;
+                foreach (IntPtr handle in handles)
+                {
+                    AutomationElement hintPageWindow = AutomationElement.FromHandle(handle);
+                    if (hintPageWindow == null)
+                    {
+                        continue;
+                    }
+                    PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, HintPage.AUTOMATION_ID_LABEL_HINT);
+                    PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Text);
+                    AutomationElement labelMsg = hintPageWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
+                    if (labelMsg != null && !"".Equals(labelMsg.Current.Name))
+                    {
+                        has = true;
+                        closeWindow(handle);
+                    }
+                }
+                return has;
+            }
+            return false;
+        }
     }
 }

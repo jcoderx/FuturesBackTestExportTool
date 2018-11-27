@@ -13,5 +13,7 @@ namespace FuturesBackTestExportTool
         public const int WARNING_STARTING_ENDING_DATE = 1;
         //收集报告出错警告
         public const int WARNING_COLLECTION_REPORT = 2;
+        //模型不支持周期(不支持的模型)
+        public const int WARNING_UNSUPPORTED_MODEL = 3;
     }
 }
