@@ -115,7 +115,7 @@
             this.buttonBackTest.Name = "buttonBackTest";
             this.buttonBackTest.Size = new System.Drawing.Size(121, 30);
             this.buttonBackTest.TabIndex = 6;
-            this.buttonBackTest.Text = "设置回测参数";
+            this.buttonBackTest.Text = "回测";
             this.buttonBackTest.UseVisualStyleBackColor = true;
             this.buttonBackTest.Click += new System.EventHandler(this.buttonBackTest_Click);
             // 

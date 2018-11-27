@@ -3,6 +3,11 @@
     //单个模型对应的回测报告
     public class ModelReport
     {
+        public bool warning;
+        //信号计算开始时间
+        public string startingDate;
+        //信号计算结束时间
+        public string endingDate;
         //模型名称
         public string modelName;
         //信号个数

@@ -17,8 +17,9 @@ namespace FuturesBackTestExportTool
     {
         private const string CLASS_CLIENT = "Afx:0000000140000000";
         private IntPtr mainHandle;
-        private int category;//0：期货，1：股票
-        private List<Exchange> exchanges; //交易所对应的品种、合约
+        //private int category;//0：期货，1：股票
+        private List<Exchange> exchanges; //期货交易所对应的品种、合约
+        private List<StockExchange> stockExchanges;//股票交易所对应的股票
         private List<ModelCategory> modelCategories;//模型
         private List<TimeCycle> cycles;//周期
         private DateTime[] startingEndingDate;//起止时间
@@ -44,7 +45,7 @@ namespace FuturesBackTestExportTool
                 FormChooseCategory formChooseCategory = new FormChooseCategory();
                 if (formChooseCategory.ShowDialog() == DialogResult.OK)
                 {
-                    category = formChooseCategory.getResult();
+                    int category = formChooseCategory.getResult();
                     if (category == 0)
                     {
                         FormFuturesChooseVariety formFuturesChooseVariety = new FormFuturesChooseVariety(mainHandle);
@@ -68,7 +69,7 @@ namespace FuturesBackTestExportTool
                                         {
                                             this.dataGridViewResult.Rows.RemoveAt(0);
                                         }
-                                        startBackTest();
+                                        startBackTestFutures();
                                     }
                                 }
                             }
@@ -76,7 +77,32 @@ namespace FuturesBackTestExportTool
                     }
                     else if (category == 1)
                     {
-                        MessageBox.Show("正在努力开发中...");
+                        FormStockChooseVariety formStockChooseVariety = new FormStockChooseVariety(mainHandle);
+                        if (formStockChooseVariety.ShowDialog() == DialogResult.OK)
+                        {
+                            stockExchanges = formStockChooseVariety.getResult();
+                            FormChooseModel formChooseModel = new FormChooseModel(mainHandle);
+                            if (formChooseModel.ShowDialog() == DialogResult.OK)
+                            {
+                                modelCategories = formChooseModel.getResult();
+                                FormChooseCycle formChooseCycle = new FormChooseCycle();
+                                if (formChooseCycle.ShowDialog() == DialogResult.OK)
+                                {
+                                    cycles = formChooseCycle.getResult();
+                                    FormChooseTime formChooseTime = new FormChooseTime();
+                                    if (formChooseTime.ShowDialog() == DialogResult.OK)
+                                    {
+                                        startingEndingDate = formChooseTime.getResult();
+                                        // 开始回测
+                                        while (this.dataGridViewResult.Rows.Count != 0)
+                                        {
+                                            this.dataGridViewResult.Rows.RemoveAt(0);
+                                        }
+                                        startBackTestStock();
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -108,7 +134,7 @@ namespace FuturesBackTestExportTool
         }
 
         //回测流程
-        private void startBackTest()
+        private void startBackTestFutures()
         {
             if (exchanges == null || exchanges.Count == 0)
             {
@@ -121,7 +147,7 @@ namespace FuturesBackTestExportTool
                 List<Variety> varieties = exchange.varieties;
                 if (varieties == null && varieties.Count == 0)
                 {
-                    Console.WriteLine(exchangeName + "中的品种为空");
+                    //Console.WriteLine(exchangeName + "中的品种为空");
                     continue;
                 }
                 foreach (Variety variety in varieties)
@@ -130,7 +156,7 @@ namespace FuturesBackTestExportTool
                     List<int> agreements = variety.agreements;
                     if (agreements == null || agreements.Count == 0)
                     {
-                        Console.WriteLine(exchangeName + "中" + varietyName + "中的合约为空");
+                        //Console.WriteLine(exchangeName + "中" + varietyName + "中的合约为空");
                         continue;
                     }
                     foreach (int i in agreements)
@@ -142,14 +168,15 @@ namespace FuturesBackTestExportTool
                     }
                 }
             }
-            frontMessageBox("导出完成");
+            PageUtils.frontMessageBox(this, "导出完成");
         }
 
         //回测单个品种、合约
         private bool backTestSingleAgreement(string exchangeName, string varietyName, int agreement)
         {
+            Thread.Sleep(500);
             //1.打开“挑选要分析的股票，合约或品种”界面
-            if (!toFuturesAnalysisPage())
+            if (!PageUtils.toFuturesAnalysisPage(this, mainHandle))
             {
                 //MessageBox.Show("打开“挑选要分析的股票，合约或品种”界面失败");
                 return false;
@@ -159,10 +186,20 @@ namespace FuturesBackTestExportTool
             {
                 return false;
             }
+            if (!backTestSingleVarietyInner(varietyName, agreement))
+            {
+                return false;
+            }
+            return true;
+        }
+
+        //重要：回测单个品种（期货的品种+合约，或者股票）
+        private bool backTestSingleVarietyInner(string varietyName, int agreement)
+        {
             //3.处理多个周期
             if (cycles == null || cycles.Count == 0)
             {
-                frontMessageBox("未设置周期参数，请重新设置回测参数");
+                PageUtils.frontMessageBox(this, "未设置周期参数，请重新设置回测参数");
                 return false;
             }
             //for report
@@ -180,6 +217,8 @@ namespace FuturesBackTestExportTool
                     //MessageBox.Show("处理周期失败");
                     return false;
                 }
+                //TODO 容错
+                waitKLine();
                 //for report
                 CycleReport cycleReport = new CycleReport();
                 cycleReport.cycleName = cycle.getName();
@@ -188,7 +227,7 @@ namespace FuturesBackTestExportTool
                 //4.选择模型
                 if (modelCategories == null || modelCategories.Count == 0)
                 {
-                    frontMessageBox("未设置模型参数，请重新设置回测参数");
+                    PageUtils.frontMessageBox(this, "未设置模型参数，请重新设置回测参数");
                     return false;
                 }
                 foreach (ModelCategory modelCategory in modelCategories)
@@ -198,39 +237,49 @@ namespace FuturesBackTestExportTool
                         List<string> models = modelCategory.models;
                         foreach (string model in models)
                         {
-                            Console.WriteLine("模型:"+ model);
+                            //Console.WriteLine("模型:" + model);
+                            if (!backTestSingleModel(modelCategory.modelCategoryName, model))
+                            {
+                                return false;
+                            }
+                            //TODO 容错
+                            waitKLine();
+                            ModelReport modelReport = new ModelReport();
+                            modelReport.modelName = model;
+                            modelReports.Add(modelReport);
                             //试3次，容错（有时候获取不到报告，报告就一行提示信息）
                             int collectionReportCount = 0;
                             bool collectionReportSuccess = false;
+                            bool chooseStartingEndingTimeSuccess = true;
                             while (collectionReportCount < 3)
                             {
                                 collectionReportCount++;
-                                if (!backTestSingleModel(modelCategory.modelCategoryName, model))
+                                //5.选择起止时间  TODO这里暂时这样处理，多测试再分析吧
+                                int startingEndingDateWarningCode;
+                                if (!chooseStartingEndingTime(startingEndingDate, out startingEndingDateWarningCode))
                                 {
-                                    //MessageBox.Show("处理模型失败");
-                                    return false;
+                                    //选择时间出错，跳出容错循环
+                                    chooseStartingEndingTimeSuccess = false;
+                                    break;
                                 }
-                                //5.选择起止时间
-                                if (!chooseStartingEndingTime(startingEndingDate))
-                                {
-                                    //MessageBox.Show("处理起止时间失败");
-                                    return false;
-                                }
-                                ModelReport modelReport = new ModelReport();
-                                modelReport.modelName = model;
+                                modelReport.warning = startingEndingDateWarningCode != WarningCode.NO_WARNING;
+
                                 //6.点击“回测报告”按钮，跳转到回测页面，获取数据
                                 if (!collectionReport(modelReport))
                                 {
                                     continue;
                                 }
                                 collectionReportSuccess = true;
-                                modelReports.Add(modelReport);
                                 break;
                             }
+                            if (!chooseStartingEndingTimeSuccess)
+                            {
+                                continue;
+                            }
+
                             if (!collectionReportSuccess)
                             {
-                                frontMessageBox("获取回测报告失败");
-                                return false;
+                                //Console.WriteLine("获取回测报告失败");
                             }
                         }
                     }
@@ -241,90 +290,19 @@ namespace FuturesBackTestExportTool
             return true;
         }
 
-        //打开“挑选要分析的股票，合约或品种”界面
-        private bool toFuturesAnalysisPage()
-        {
-            Thread.Sleep(500);
-            AutomationElement targetWindow = AutomationElement.FromHandle(mainHandle);
-            if (targetWindow != null)
-            {
-                PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, WH8MainPage.AUTOMATION_ID_BUTTON_HANGQINGSHOUYE);
-                PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
-                AutomationElement buttonHangqing = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
-                if (buttonHangqing != null)
-                {
-                    SimulateOperating.clickButton(buttonHangqing);
-
-                    PropertyCondition condition2 = new PropertyCondition(AutomationElement.AutomationIdProperty, WH8MainPage.AUTOMATION_ID_TREEVIEW_SHUJU);
-                    PropertyCondition condition3 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Tree);
-                    AutomationElement treeViewShuju = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition2, condition3));
-                    if (treeViewShuju != null)
-                    {
-                        Condition condition4 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.TreeItem);
-                        AutomationElementCollection automationElementCollection = treeViewShuju.FindAll(TreeScope.Children, condition4);
-                        if (automationElementCollection != null && automationElementCollection.Count > 0)
-                        {
-                            if ("我的篮子".Equals(automationElementCollection[0].Current.Name))
-                            {
-                                SimulateOperating.doubleClick(automationElementCollection[0]);
-
-                                PropertyCondition condition5 = new PropertyCondition(AutomationElement.AutomationIdProperty, WH8MainPage.AUTOMATION_ID_BUTTON_KXIAN);
-                                PropertyCondition condition6 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
-                                AutomationElement buttonKXIAN = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition5, condition6));
-                                if (buttonKXIAN != null)
-                                {
-                                    SimulateOperating.clickButton(buttonKXIAN);
-                                    return true;
-                                }
-                                else
-                                {
-                                    frontMessageBox("未找到主界面“K线”按钮");
-                                    return false;
-                                }
-                            }
-                            else
-                            {
-                                frontMessageBox("未找到主界面“数据”树形结构中的“我的篮子”子项");
-                                return false;
-                            }
-                        }
-                        else
-                        {
-                            frontMessageBox("未找到主界面“数据”树形结构的子项");
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        frontMessageBox("未找到主界面“数据”对应的树形结构");
-                        return false;
-                    }
-                }
-                else
-                {
-                    frontMessageBox("未找到主界面“行情首页”按钮");
-                    return false;
-                }
-            }
-            else
-            {
-                frontMessageBox("未找到“赢智程序化”主界面");
-                return false;
-            }
-        }
-
         private bool backTestSingleCycle(TimeCycle cycle)
         {
             Thread.Sleep(500);
             AutomationElement targetWindow = AutomationElement.FromHandle(mainHandle);
             if (targetWindow == null)
             {
-                frontMessageBox("未找到“赢智程序化”主界面");
+                PageUtils.frontMessageBox(this, "未找到“赢智程序化”主界面");
                 return false;
             }
+            WindowsApiUtils.clearOtherWindows(mainHandle, null);
             if (cycle == null || cycle.unit == null)
             {
-                frontMessageBox("设置周期参数无效，请重新设置回测参数");
+                PageUtils.frontMessageBox(this, "设置周期参数无效，请重新设置回测参数");
                 return false;
             }
             if (cycle.value == 0)
@@ -351,15 +329,16 @@ namespace FuturesBackTestExportTool
                 }
                 if (automationIdButtonCycle == null)
                 {
-                    frontMessageBox("设置周期参数无效，请重新设置回测参数");
+                    PageUtils.frontMessageBox(this, "设置周期参数无效，请重新设置回测参数");
                     return false;
                 }
+                WindowsApiUtils.clearOtherWindows(mainHandle, null);
                 PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, automationIdButtonCycle);
                 PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
                 AutomationElement buttonCycle = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
                 if (buttonCycle == null)
                 {
-                    frontMessageBox("未找到主界面“" + cycle.unit + "”按钮");
+                    PageUtils.frontMessageBox(this, "未找到主界面“" + cycle.unit + "”按钮");
                     return false;
                 }
                 SimulateOperating.clickButton(buttonCycle);
@@ -367,7 +346,75 @@ namespace FuturesBackTestExportTool
             }
             else
             {
-                return chooseCycle(cycle);
+                if (cycle.isDefaultCycle())
+                {
+                    string automationIdButtonCycle = null;
+                    switch (cycle.getName())
+                    {
+                        //"5秒", "10秒", "15秒", "30秒", "1分钟", "3分钟", "5分钟", "10分钟", "15分钟", "30分钟", "1小时", "2小时", "3小时", "4小时"
+                        case "5秒":
+                            automationIdButtonCycle = WH8MainPage.AUTOMATION_ID_BUTTON_5S;
+                            break;
+                        case "10秒":
+                            automationIdButtonCycle = WH8MainPage.AUTOMATION_ID_BUTTON_10S;
+                            break;
+                        case "15秒":
+                            automationIdButtonCycle = WH8MainPage.AUTOMATION_ID_BUTTON_15S;
+                            break;
+                        case "30秒":
+                            automationIdButtonCycle = WH8MainPage.AUTOMATION_ID_BUTTON_30S;
+                            break;
+                        case "1分钟":
+                            automationIdButtonCycle = WH8MainPage.AUTOMATION_ID_BUTTON_1M;
+                            break;
+                        case "3分钟":
+                            automationIdButtonCycle = WH8MainPage.AUTOMATION_ID_BUTTON_3M;
+                            break;
+                        case "5分钟":
+                            automationIdButtonCycle = WH8MainPage.AUTOMATION_ID_BUTTON_5M;
+                            break;
+                        case "10分钟":
+                            automationIdButtonCycle = WH8MainPage.AUTOMATION_ID_BUTTON_10M;
+                            break;
+                        case "15分钟":
+                            automationIdButtonCycle = WH8MainPage.AUTOMATION_ID_BUTTON_15M;
+                            break;
+                        case "30分钟":
+                            automationIdButtonCycle = WH8MainPage.AUTOMATION_ID_BUTTON_30M;
+                            break;
+                        case "1小时":
+                            automationIdButtonCycle = WH8MainPage.AUTOMATION_ID_BUTTON_1H;
+                            break;
+                        case "2小时":
+                            automationIdButtonCycle = WH8MainPage.AUTOMATION_ID_BUTTON_2H;
+                            break;
+                        case "3小时":
+                            automationIdButtonCycle = WH8MainPage.AUTOMATION_ID_BUTTON_3H;
+                            break;
+                        case "4小时":
+                            automationIdButtonCycle = WH8MainPage.AUTOMATION_ID_BUTTON_4H;
+                            break;
+                    }
+                    if (automationIdButtonCycle == null)
+                    {
+                        PageUtils.frontMessageBox(this, "设置周期参数无效，请重新设置回测参数");
+                        return false;
+                    }
+                    PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, automationIdButtonCycle);
+                    PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
+                    AutomationElement buttonCycle = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
+                    if (buttonCycle == null)
+                    {
+                        PageUtils.frontMessageBox(this, "未找到主界面“" + cycle.getName() + "”按钮");
+                        return false;
+                    }
+                    SimulateOperating.clickButton(buttonCycle);
+                    return true;
+                }
+                else
+                {
+                    return chooseCustomCycle(cycle);
+                }
             }
         }
 
@@ -378,22 +425,23 @@ namespace FuturesBackTestExportTool
             AutomationElement targetWindow = AutomationElement.FromHandle(mainHandle);
             if (targetWindow == null)
             {
-                frontMessageBox("未找到“赢智程序化”主界面");
+                PageUtils.frontMessageBox(this, "未找到“赢智程序化”主界面");
                 return false;
             }
+            WindowsApiUtils.clearOtherWindows(mainHandle, null);
             PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, WH8MainPage.AUTOMATION_ID_TREEVIEW_SHUJU);
             PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Tree);
             AutomationElement treeViewModel = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
             if (treeViewModel == null)
             {
-                frontMessageBox("未找到主界面“模型”对应的树形结构");
+                PageUtils.frontMessageBox(this, "未找到主界面“模型”对应的树形结构");
                 return false;
             }
             Condition condition2 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.TreeItem);
             AutomationElementCollection modelCategoryElementCollection = treeViewModel.FindAll(TreeScope.Children, condition2);
             if (modelCategoryElementCollection == null || modelCategoryElementCollection.Count == 0)
             {
-                frontMessageBox("未找到主界面“模型”树形结构的子项");
+                PageUtils.frontMessageBox(this, "未找到主界面“模型”树形结构的子项");
                 return false;
             }
             bool foundModelCategory = false;
@@ -408,24 +456,26 @@ namespace FuturesBackTestExportTool
                     AutomationElementCollection modelElementCollection = modelCategoryAE.FindAll(TreeScope.Children, condition3);
                     if (modelElementCollection == null && modelElementCollection.Count == 0)
                     {
-                        frontMessageBox("未找到主界面“模型”树形结构中的“回测”子项");
+                        PageUtils.frontMessageBox(this, "未找到主界面“模型”树形结构中的“回测”子项");
                         return false;
                     }
                     foreach (AutomationElement modelAE in modelElementCollection)
                     {
                         if (model.Equals(modelAE.Current.Name))
                         {
+                            SimulateOperating.selectTreeItem(modelAE);
+                            Thread.Sleep(300);
                             SimulateOperating.doubleClick(modelAE);
                             return true;
                         }
                     }
-                    frontMessageBox("未找到主界面“模型”树形结构子项回测中的“" + model + "”模型");
+                    PageUtils.frontMessageBox(this, "未找到主界面“模型”树形结构子项回测中的“" + model + "”模型");
                     return false;
                 }
             }
             if (!foundModelCategory)
             {
-                frontMessageBox("未找到主界面“模型”树形结构中的“回测”子项");
+                PageUtils.frontMessageBox(this, "未找到主界面“模型”树形结构中的“回测”子项");
                 return false;
             }
             return false;
@@ -437,12 +487,12 @@ namespace FuturesBackTestExportTool
             List<IntPtr> wndHandles = WindowsApiUtils.findWindowHandlesByClassTitleFuzzy(CLASS_DIALOG, FuturesAnalysisPage.FUTURES_ANALYSIS_PAGE_TITLE);
             if (wndHandles.Count == 0)
             {
-                frontMessageBox("打开“挑选要分析的股票，合约或品种”界面失败，未找到该界面");
+                PageUtils.frontMessageBox(this, "打开“挑选要分析的股票，合约或品种”界面失败，未找到该界面");
                 return false;
             }
             else if (wndHandles.Count > 1)
             {
-                frontMessageBox("找到多个“挑选要分析的股票，合约或品种”界面，请关闭多余界面");
+                PageUtils.frontMessageBox(this, "找到多个“挑选要分析的股票，合约或品种”界面，请关闭多余界面");
                 return false;
             }
             IntPtr handle = wndHandles[0];
@@ -450,7 +500,8 @@ namespace FuturesBackTestExportTool
             AutomationElement targetWindow = AutomationElement.FromHandle(handle);
             if (targetWindow != null)
             {
-                PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, FuturesAnalysisPage.AUTOMATION_ID_TREEVIEW_PRODUCT_CATEGORY);
+                WindowsApiUtils.clearOtherWindows(mainHandle, new List<IntPtr> { handle });
+                PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, FuturesAnalysisPage.AUTOMATION_ID_TREEVIEW_EXCHANGE);
                 PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Tree);
                 AutomationElement treeviewExchange = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
 
@@ -481,7 +532,12 @@ namespace FuturesBackTestExportTool
                                             if (desVarietyName.Equals(varietyName))
                                             {
                                                 foundVariety = true;
-                                                SimulateOperating.doubleClick(varietyAE);
+                                                if (!SimulateOperating.selectTreeItem(varietyAE))
+                                                {
+                                                    PageUtils.frontMessageBox(this, "在“挑选要分析的股票，合约或品种”界面，选择“" + desVarietyName + "”失败");
+                                                    return false;
+                                                }
+
                                                 // 选择合约
                                                 if (chooseAgreement(targetWindow, desAgreement))
                                                 {
@@ -489,7 +545,7 @@ namespace FuturesBackTestExportTool
                                                 }
                                                 else
                                                 {
-                                                    frontMessageBox("在“挑选要分析的股票，合约或品种”界面，选择“" + desVarietyName + Variety.getAgreementName(desAgreement) + "”失败");
+                                                    PageUtils.frontMessageBox(this, "在“挑选要分析的股票，合约或品种”界面，选择“" + desVarietyName + Variety.getAgreementName(desAgreement) + "”失败");
                                                     return false;
                                                 }
 
@@ -497,44 +553,44 @@ namespace FuturesBackTestExportTool
                                         }
                                         if (!foundVariety)
                                         {
-                                            frontMessageBox("在“挑选要分析的股票，合约或品种”界面，未找到“" + desVarietyName + "”品种");
+                                            PageUtils.frontMessageBox(this, "在“挑选要分析的股票，合约或品种”界面，未找到“" + desVarietyName + "”品种");
                                             return false;
                                         }
                                     }
                                     else
                                     {
-                                        frontMessageBox("未找到“挑选要分析的股票，合约或品种”界面中子项“" + exchangeName + "”的子项");
+                                        PageUtils.frontMessageBox(this, "未找到“挑选要分析的股票，合约或品种”界面中子项“" + exchangeName + "”的子项");
                                         return false;
                                     }
                                 }
                                 else
                                 {
-                                    frontMessageBox("在“挑选要分析的股票，合约或品种”界面，展开“" + exchangeName + "”失败");
+                                    PageUtils.frontMessageBox(this, "在“挑选要分析的股票，合约或品种”界面，展开“" + exchangeName + "”失败");
                                     return false;
                                 }
                             }
                         }
                         if (!foundExchange)
                         {
-                            frontMessageBox("未找到“挑选要分析的股票，合约或品种”界面中“" + desExchangeName + "”子项");
+                            PageUtils.frontMessageBox(this, "未找到“挑选要分析的股票，合约或品种”界面中“" + desExchangeName + "”子项");
                             return false;
                         }
                     }
                     else
                     {
-                        frontMessageBox("未找到“挑选要分析的股票，合约或品种”界面中“品种”树形结构的子项");
+                        PageUtils.frontMessageBox(this, "未找到“挑选要分析的股票，合约或品种”界面中“品种”树形结构的子项");
                         return false;
                     }
                 }
                 else
                 {
-                    frontMessageBox("未找到“挑选要分析的股票，合约或品种”界面中“品种”树形结构");
+                    PageUtils.frontMessageBox(this, "未找到“挑选要分析的股票，合约或品种”界面中“品种”树形结构");
                     return false;
                 }
             }
             else
             {
-                frontMessageBox("未找到“挑选要分析的股票，合约或品种”界面");
+                PageUtils.frontMessageBox(this, "未找到“挑选要分析的股票，合约或品种”界面");
                 return false;
             }
             //TODO 
@@ -566,101 +622,120 @@ namespace FuturesBackTestExportTool
             {
                 if (SimulateOperating.toggleCheckbox(checkboxAgreement))
                 {
-                    PropertyCondition condition2 = new PropertyCondition(AutomationElement.AutomationIdProperty, FuturesAnalysisPage.AUTOMATION_ID_LISTBOX_PRODUCT);
+                    PropertyCondition condition2 = new PropertyCondition(AutomationElement.AutomationIdProperty, FuturesAnalysisPage.AUTOMATION_ID_LISTBOX_VARIETY);
                     PropertyCondition condition3 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.List);
                     AutomationElement listBoxAgreement = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition2, condition3));
                     if (listBoxAgreement != null)
                     {
                         Condition condition4 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem);
-                        AutomationElementCollection automationElementCollection = listBoxAgreement.FindAll(TreeScope.Children, condition4);
-                        if (automationElementCollection != null && automationElementCollection.Count > 0)
+                        AutomationElementCollection agreementElementCollection = listBoxAgreement.FindAll(TreeScope.Children, condition4);
+                        if (agreementElementCollection != null && agreementElementCollection.Count > 0)
                         {
-                            SimulateOperating.doubleClick(automationElementCollection[0]);
-                            return true;
+                            if (agreement == 2)
+                            {
+                                //连续，需要特殊处理
+                                foreach (AutomationElement agreementAE in agreementElementCollection)
+                                {
+                                    if (agreementAE.Current.Name.Contains("主连"))
+                                    {
+                                        SimulateOperating.doubleClick(agreementAE);
+                                        return true;
+                                    }
+                                }
+                                PageUtils.frontMessageBox(this, "在“挑选要分析的股票，合约或品种”界面，未找到对应的合约");
+                                return false;
+                            }
+                            else
+                            {
+                                SimulateOperating.doubleClick(agreementElementCollection[0]);
+                                return true;
+                            }
                         }
                         else
                         {
-                            frontMessageBox("在“挑选要分析的股票，合约或品种”界面，合约列表为空");
+                            PageUtils.frontMessageBox(this, "在“挑选要分析的股票，合约或品种”界面，合约列表为空");
                             return false;
                         }
                     }
                     else
                     {
-                        frontMessageBox("未找到“挑选要分析的股票，合约或品种”界面中的合约列表");
+                        PageUtils.frontMessageBox(this, "未找到“挑选要分析的股票，合约或品种”界面中的合约列表");
                         return false;
                     }
                 }
                 else
                 {
-                    frontMessageBox("勾选“挑选要分析的股票，合约或品种”界面的复选框失败");
+                    PageUtils.frontMessageBox(this, "勾选“挑选要分析的股票，合约或品种”界面的复选框失败");
                     return false;
                 }
             }
             else
             {
-                frontMessageBox("未找到“挑选要分析的股票，合约或品种”界面中对应合约");
+                PageUtils.frontMessageBox(this, "未找到“挑选要分析的股票，合约或品种”界面中对应合约");
                 return false;
             }
         }
 
         //打开自定义周期界面，设置周期，关闭
-        private bool chooseCycle(TimeCycle cycle)
+        private bool chooseCustomCycle(TimeCycle cycle)
         {
             AutomationElement targetWindow = AutomationElement.FromHandle(mainHandle);
             if (targetWindow == null)
             {
-                frontMessageBox("未找到“赢智程序化”主界面");
+                PageUtils.frontMessageBox(this, "未找到“赢智程序化”主界面");
                 return false;
             }
+            WindowsApiUtils.clearOtherWindows(mainHandle, null);
             PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, WH8MainPage.AUTOMATION_ID_BUTTON_ZIDINGYIZHOUQI);
             PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
             AutomationElement buttonZidingyiZhouqi = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
             if (buttonZidingyiZhouqi == null)
             {
-                frontMessageBox("未找到主界面“自定义周期”按钮");
+                PageUtils.frontMessageBox(this, "未找到主界面“自定义周期”按钮");
                 return false;
             }
             if (!SimulateOperating.clickButton(buttonZidingyiZhouqi))
             {
-                frontMessageBox("点击主界面“自定义周期”按钮失败");
+                PageUtils.frontMessageBox(this, "点击主界面“自定义周期”按钮失败");
                 return false;
             }
 
             List<IntPtr> wndHandles = WindowsApiUtils.findWindowHandlesByClassTitleFuzzy(CLASS_DIALOG, CustomCyclePage.CUSTOM_CYCLE_PAGE_TITLE);
             if (wndHandles.Count == 0)
             {
-                frontMessageBox("打开“自定义分析周期”界面失败，未找到该界面");
+                PageUtils.frontMessageBox(this, "打开“自定义分析周期”界面失败，未找到该界面");
                 return false;
             }
             else if (wndHandles.Count > 1)
             {
-                frontMessageBox("找到多个“自定义分析周期”界面");
+                PageUtils.frontMessageBox(this, "找到多个“自定义分析周期”界面");
                 //不存在这种情况
             }
             IntPtr handle = wndHandles[0];
             AutomationElement customCycleWindow = AutomationElement.FromHandle(handle);
             if (customCycleWindow == null)
             {
-                frontMessageBox("未找到“自定义分析周期”界面");
+                PageUtils.frontMessageBox(this, "未找到“自定义分析周期”界面");
                 return false;
             }
+            WindowsApiUtils.clearOtherWindows(mainHandle, new List<IntPtr> { handle });
 
             //尼玛神坑，通过AutomationElement找不到编辑框，只能遍历所有控件了。。。。
             List<IntPtr> editHandles = WindowsApiUtils.findControlHandlesByClassName(handle, "Edit");
             if (editHandles == null || editHandles.Count == 0)
             {
-                frontMessageBox("未找到“自定义分析周期”界面中“时间”编辑框");
+                PageUtils.frontMessageBox(this, "未找到“自定义分析周期”界面中“时间”编辑框");
                 return false;
             }
             AutomationElement editCycle = AutomationElement.FromHandle(editHandles[0]);
             if (editCycle == null)
             {
-                frontMessageBox("未找到“自定义分析周期”界面中“时间”编辑框");
+                PageUtils.frontMessageBox(this, "未找到“自定义分析周期”界面中“时间”编辑框");
                 return false;
             }
             if (!SimulateOperating.setEditValue(editCycle, cycle.value.ToString()))
             {
-                frontMessageBox("在“自定义分析周期”界面，设置周期失败");
+                PageUtils.frontMessageBox(this, "在“自定义分析周期”界面，设置周期失败");
                 return false;
             }
 
@@ -669,14 +744,14 @@ namespace FuturesBackTestExportTool
             AutomationElement comboBoxUnit = customCycleWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition4, condition5));
             if (comboBoxUnit == null)
             {
-                frontMessageBox("未找到“自定义分析周期”界面中“周期单位选择”下拉框");
+                PageUtils.frontMessageBox(this, "未找到“自定义分析周期”界面中“周期单位选择”下拉框");
                 return false;
             }
             PropertyCondition condition6 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem);
             AutomationElementCollection unitElementCollection = comboBoxUnit.FindAll(TreeScope.Subtree, condition6);
             if (unitElementCollection == null || unitElementCollection.Count == 0)
             {
-                frontMessageBox("未找到“自定义分析周期”界面中“周期单位选择”下拉框的子项");
+                PageUtils.frontMessageBox(this, "未找到“自定义分析周期”界面中“周期单位选择”下拉框的子项");
                 return false;
             }
             bool foundUnit = false;
@@ -687,14 +762,14 @@ namespace FuturesBackTestExportTool
                     foundUnit = true;
                     if (!SimulateOperating.selectComboBoxItem(unitAE))
                     {
-                        frontMessageBox("在“自定义分析周期”界面，选择时间单位失败");
+                        PageUtils.frontMessageBox(this, "在“自定义分析周期”界面，选择时间单位失败");
                         return false;
                     }
                 }
             }
             if (!foundUnit)
             {
-                frontMessageBox("未找到“自定义分析周期”界面中对应的单位");
+                PageUtils.frontMessageBox(this, "未找到“自定义分析周期”界面中对应的单位");
                 return false;
             }
             PropertyCondition condition7 = new PropertyCondition(AutomationElement.AutomationIdProperty, CustomCyclePage.AUTOMATION_ID_BUTTON_USE);
@@ -702,71 +777,74 @@ namespace FuturesBackTestExportTool
             AutomationElement buttonUse = customCycleWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition7, condition8));
             if (buttonUse == null)
             {
-                frontMessageBox("未找到“自定义分析周期”界面中的“应用”按钮");
+                PageUtils.frontMessageBox(this, "未找到“自定义分析周期”界面中的“应用”按钮");
                 return false;
             }
             if (!SimulateOperating.clickButton(buttonUse))
             {
-                frontMessageBox("点击“自定义分析周期”界面中的“应用”按钮失败");
+                PageUtils.frontMessageBox(this, "点击“自定义分析周期”界面中的“应用”按钮失败");
                 return false;
             }
-            //
             //MessageBox.Show("查看设置");
             WindowsApiUtils.closeWindow(handle);
             return true;
         }
 
-        private bool chooseStartingEndingTime(DateTime[] startingEndingTime)
+        private bool chooseStartingEndingTime(DateTime[] startingEndingTime, out int warningCode)
         {
+            warningCode = WarningCode.NO_WARNING;
             Thread.Sleep(500);
             AutomationElement targetWindow = AutomationElement.FromHandle(mainHandle);
             if (targetWindow != null)
             {
+                WindowsApiUtils.clearOtherWindows(mainHandle, null);
                 PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, WH8MainPage.AUTOMATION_ID_BUTTON_QIZHISHIJIAN);
                 PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
                 AutomationElement buttonQizhiShijian = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
                 if (buttonQizhiShijian != null)
                 {
                     SimulateOperating.clickButton(buttonQizhiShijian);
-                    return setupStartingEndingTime(startingEndingTime);
+                    return setupStartingEndingTime(startingEndingTime, out warningCode);
                 }
                 else
                 {
-                    frontMessageBox("未找到主界面“设定信号计算起止时间”按钮");
+                    PageUtils.frontMessageBox(this, "未找到主界面“设定信号计算起止时间”按钮");
                     return false;
                 }
             }
             else
             {
-                frontMessageBox("未找到“赢智程序化”主界面");
+                PageUtils.frontMessageBox(this, "未找到“赢智程序化”主界面");
                 return false;
             }
         }
 
         //对“设定信号计算起止时间”界面的操作
-        private bool setupStartingEndingTime(DateTime[] startingEndingTime)
+        private bool setupStartingEndingTime(DateTime[] startingEndingTime, out int warningCode)
         {
+            warningCode = WarningCode.NO_WARNING;
             if (startingEndingTime == null && startingEndingTime.Length < 2)
             {
-                frontMessageBox("“信号计算起止时间”参数设置有误，请重新设置回测参数");
+                PageUtils.frontMessageBox(this, "“信号计算起止时间”参数设置有误，请重新设置回测参数");
                 return false;
             }
 
             List<IntPtr> wndHandles = WindowsApiUtils.findWindowHandlesByClassTitleFuzzy(CLASS_DIALOG, StartingEndingTimePage.STARTING_ENDING_TIME_PAGE_TITLE);
             if (wndHandles.Count == 0)
             {
-                frontMessageBox("打开“设定信号计算起止时间”界面失败，未找到该界面");
+                PageUtils.frontMessageBox(this, "打开“设定信号计算起止时间”界面失败，未找到该界面");
                 return false;
             }
             else if (wndHandles.Count > 1)
             {
-                frontMessageBox("找到多个“设定信号计算起止时间”界面，请关闭多余的界面");
+                PageUtils.frontMessageBox(this, "找到多个“设定信号计算起止时间”界面，请关闭多余的界面");
                 return false;
             }
             IntPtr handle = wndHandles[0];
             AutomationElement targetWindow = AutomationElement.FromHandle(handle);
             if (targetWindow != null)
             {
+                WindowsApiUtils.clearOtherWindows(mainHandle, new List<IntPtr> { handle });
                 PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, StartingEndingTimePage.AUTOMATION_ID_BUTTON_OK);
                 PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
                 AutomationElement buttonOK = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
@@ -792,7 +870,6 @@ namespace FuturesBackTestExportTool
                     SendKeys.SendWait(startingMonth);
                     SendKeys.SendWait("{RIGHT}");
                     SendKeys.SendWait(startingDay);
-
                     SendKeys.SendWait("{TAB}");
                     SendKeys.SendWait(endingYear);
                     SendKeys.SendWait("{RIGHT}");
@@ -804,6 +881,8 @@ namespace FuturesBackTestExportTool
                     SendKeys.SendWait("{TAB}");
                     SendKeys.SendWait("{TAB}");
                     SendKeys.SendWait("{TAB}");
+                    SendKeys.SendWait("{LEFT}");
+                    SendKeys.SendWait("{LEFT}");
                     Thread.Sleep(1000);
 
                     PropertyCondition condition2 = new PropertyCondition(AutomationElement.AutomationIdProperty, StartingEndingTimePage.AUTOMATION_ID_DATE_PICK_STARTING);
@@ -811,30 +890,35 @@ namespace FuturesBackTestExportTool
                     AutomationElement datePickStarting = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition2, condition3));
                     if (datePickStarting == null)
                     {
-                        frontMessageBox("未找到“设定信号计算起止时间”界面的开始时间选择器");
+                        PageUtils.frontMessageBox(this, "未找到“设定信号计算起止时间”界面的开始时间选择器");
+                        WindowsApiUtils.closeWindow(handle);
                         return false;
                     }
-                    //SimulateOperating.clickAutomationElement(datePickStarting);
-                    //Thread.Sleep(500);
 
                     PropertyCondition condition4 = new PropertyCondition(AutomationElement.AutomationIdProperty, StartingEndingTimePage.AUTOMATION_ID_DATE_PICK_ENDING);
                     PropertyCondition condition5 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Pane);
                     AutomationElement datePickEnding = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition4, condition5));
                     if (datePickEnding == null)
                     {
-                        frontMessageBox("未找到“设定信号计算起止时间”界面的结束时间选择器");
+                        PageUtils.frontMessageBox(this, "未找到“设定信号计算起止时间”界面的结束时间选择器");
+                        WindowsApiUtils.closeWindow(handle);
                         return false;
                     }
 
                     string expectedStartingDate = startingTime.Year + "/" + startingTime.Month + "/" + startingTime.Day;
                     string expectedEndingDate = endingTime.Year + "/" + endingTime.Month + "/" + endingTime.Day;
-                    Console.WriteLine(expectedStartingDate + "-" + expectedEndingDate);
+                    //Console.WriteLine(expectedStartingDate + "-" + expectedEndingDate);
 
-                    Console.WriteLine("获取：" + datePickStarting.Current.Name + "," + datePickEnding.Current.Name);
+                    //Console.WriteLine("获取：" + datePickStarting.Current.Name + "," + datePickEnding.Current.Name);
 
                     if (!expectedStartingDate.Equals(datePickStarting.Current.Name) || !expectedEndingDate.Equals(datePickEnding.Current.Name))
                     {
-                        frontMessageBox("在“设定信号计算起止时间”界面填写起止时间有误，请检查是否需要补充数据");
+                        warningCode = WarningCode.WARNING_STARTING_ENDING_DATE;
+                    }
+
+                    if (Utils.compareDateString(datePickStarting.Current.Name, datePickEnding.Current.Name) > 0)
+                    {
+                        WindowsApiUtils.closeWindow(handle);
                         return false;
                     }
 
@@ -843,13 +927,13 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    frontMessageBox("未找到“设定信号计算起止时间”界面中的“确定”按钮");
+                    PageUtils.frontMessageBox(this, "未找到“设定信号计算起止时间”界面中的“确定”按钮");
                     return false;
                 }
             }
             else
             {
-                frontMessageBox("未找到“设定信号计算起止时间”界面");
+                PageUtils.frontMessageBox(this, "未找到“设定信号计算起止时间”界面");
                 return false;
             }
         }
@@ -859,15 +943,16 @@ namespace FuturesBackTestExportTool
             AutomationElement targetWindow = AutomationElement.FromHandle(mainHandle);
             if (targetWindow == null)
             {
-                frontMessageBox("未找到“赢智程序化”主界面");
+                PageUtils.frontMessageBox(this, "未找到“赢智程序化”主界面");
                 return false;
             }
+            WindowsApiUtils.clearOtherWindows(mainHandle, null);
             PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, WH8MainPage.AUTOMATION_ID_BUTTON_HUICEBAOGAO);
             PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
             AutomationElement buttonHuiceBaogao = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
             if (buttonHuiceBaogao == null)
             {
-                frontMessageBox("未找到主界面“回测报告”按钮");
+                PageUtils.frontMessageBox(this, "未找到主界面“回测报告”按钮");
                 return false;
             }
 
@@ -875,8 +960,8 @@ namespace FuturesBackTestExportTool
             while (count < 5)
             {
                 count++;
-                Console.WriteLine("count:" + count);
                 Thread.Sleep(3000);
+                /*
                 List<IntPtr> promptPageHandles = WindowsApiUtils.findWindowHandlesByClassTitleExact(CLASS_DIALOG, "提示");
                 if (promptPageHandles != null && promptPageHandles.Count > 0)
                 {
@@ -884,15 +969,17 @@ namespace FuturesBackTestExportTool
                     {
                         WindowsApiUtils.closeWindow(promptPageHandle);
                     }
-                }
+                }*/
+                WindowsApiUtils.clearOtherWindows(mainHandle, null);
 
                 if (!SimulateOperating.clickButton(buttonHuiceBaogao))
                 {
-                    frontMessageBox("点击主界面“回测报告”按钮失败");
-                    return false;
+                    //PageUtils.frontMessageBox(this, "点击主界面“回测报告”按钮失败");
+                    continue;
                 }
 
                 //判断是否存在正在计算界面，如果有，则关闭
+                /*
                 List<IntPtr> beComputingPageHandles = WindowsApiUtils.findWindowHandlesByClassTitleExact(CLASS_DIALOG, BeComputingPage.BE_COMPUTING_PAGE_TITLE);
                 if (beComputingPageHandles != null && beComputingPageHandles.Count > 0)
                 {
@@ -900,22 +987,25 @@ namespace FuturesBackTestExportTool
                     {
                         WindowsApiUtils.closeWindow(beComputingPageHandle);
                     }
-                }
+                }*/
+                WindowsApiUtils.clearOtherWindowsByTitle(mainHandle, new List<string> { BackTestReportPage.BACK_TEST_REPORT_PAGE_TITLE });
 
-                List<IntPtr> backTestReportPageHandles = WindowsApiUtils.findWindowHandlesByClassTitleFuzzy(CLASS_DIALOG, BackTestReportPage.BE_COMPUTING_PAGE_TITLE);
+                List<IntPtr> backTestReportPageHandles = WindowsApiUtils.findWindowHandlesByClassTitleFuzzy(CLASS_DIALOG, BackTestReportPage.BACK_TEST_REPORT_PAGE_TITLE);
                 if (backTestReportPageHandles != null && backTestReportPageHandles.Count > 0)
                 {
                     if (backTestReportPageHandles.Count > 1)
                     {
-                        frontMessageBox("发现多个“模型回测报告”界面，请关闭多余界面");
-                        return false;
+                        //PageUtils.frontMessageBox(this, "发现多个“模型回测报告”界面，请关闭多余界面");
+                        //return false;
+                        //容错，重新点击回测报告按钮，为了清理多余的界面
+                        continue;
                     }
                     IntPtr backTestReportPageHandle = backTestReportPageHandles[0];
                     // 开始获取数据
                     AutomationElement backTestReportPageWindow = AutomationElement.FromHandle(backTestReportPageHandle);
                     if (backTestReportPageWindow == null)
                     {
-                        frontMessageBox("未找到“模型回测报告”界面");
+                        PageUtils.frontMessageBox(this, "未找到“模型回测报告”界面");
                         WindowsApiUtils.closeWindow(backTestReportPageHandle);
                         return false;
                     }
@@ -925,14 +1015,13 @@ namespace FuturesBackTestExportTool
                     while (countGetDataGrid < 10)
                     {
                         countGetDataGrid++;
-                        Console.WriteLine("countGetDataGrid:"+countGetDataGrid);
                         Thread.Sleep(3000);
                         PropertyCondition condition2 = new PropertyCondition(AutomationElement.AutomationIdProperty, BackTestReportPage.AUTOMATION_ID_DATA_GRID_REPORT);
                         PropertyCondition condition3 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.DataGrid);
                         AutomationElement dataGrid = backTestReportPageWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition2, condition3));
                         if (dataGrid == null)
                         {
-                            frontMessageBox("未找到“模型回测报告”界面中的报告列表");
+                            PageUtils.frontMessageBox(this, "未找到“模型回测报告”界面中的报告列表");
                             WindowsApiUtils.closeWindow(backTestReportPageHandle);
                             return false;
                         }
@@ -947,13 +1036,49 @@ namespace FuturesBackTestExportTool
                     {
                         continue;
                     }
-                    Console.WriteLine("有数据，result:"+result.Count);
                     fillDataGridView(result);
                     fillModelReport(result, modelReport);
                     return true;
                 }
             }
             return false;
+        }
+
+        private void waitKLine()
+        {
+            int count = 0;
+            while (count < 10)
+            {
+                WindowsApiUtils.clearOtherWindows(mainHandle, null);
+                count++;
+                Thread.Sleep(1000);
+                AutomationElement targetWindow = AutomationElement.FromHandle(mainHandle);
+                if (targetWindow == null)
+                {
+                    return;
+                }
+                PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, WH8MainPage.AUTOMATION_ID_BUTTON_HUICEBAOGAO);
+                PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
+                AutomationElement buttonHuiceBaogao = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
+                if (buttonHuiceBaogao == null)
+                {
+                    return;
+                }
+                if (!SimulateOperating.clickButton(buttonHuiceBaogao))
+                {
+                    return;
+                }
+                List<IntPtr> backTestReportPageHandles = WindowsApiUtils.findWindowHandlesByClassTitleFuzzy(CLASS_DIALOG, BackTestReportPage.BACK_TEST_REPORT_PAGE_TITLE);
+                if (backTestReportPageHandles != null && backTestReportPageHandles.Count > 0)
+                {
+                    WindowsApiUtils.clearOtherWindows(mainHandle, null);
+                    return;
+                }
+                else
+                {
+                    WindowsApiUtils.clearOtherWindows(mainHandle, null);
+                }
+            }
         }
 
         private void fillDataGridView(List<List<string>> data)
@@ -985,6 +1110,12 @@ namespace FuturesBackTestExportTool
                     {
                         switch (title)
                         {
+                            case "信号计算开始时间":
+                                modelReport.startingDate = rowData[1];
+                                break;
+                            case "信号计算结束时间":
+                                modelReport.endingDate = rowData[1];
+                                break;
                             case "信号个数":
                                 modelReport.signalNumber = rowData[1];
                                 break;
@@ -1033,19 +1164,178 @@ namespace FuturesBackTestExportTool
             }
         }
 
-
-        private void frontMessageBox(string message)
+        ////////////////////////////////////////////////////////////////////////////////
+        //回测股票
+        private void startBackTestStock()
         {
-            this.TopMost = true;
-            MessageBox.Show(message);
-            this.TopMost = false;
+            if (stockExchanges == null || stockExchanges.Count == 0)
+            {
+                MessageBox.Show("未设置股票品种参数，请重新设置回测参数");
+                return;
+            }
+            foreach (StockExchange stockExchange in stockExchanges)
+            {
+                string stockExchangeName = stockExchange.stockExchangeName;
+                List<string> stocks = stockExchange.stocks;
+                if (stocks == null && stocks.Count == 0)
+                {
+                    //Console.WriteLine(stockExchangeName + "中的股票为空");
+                    continue;
+                }
+                foreach (String stock in stocks)
+                {
+                    if (!backTestSingleStock(stockExchangeName, stock))
+                    {
+                        return;
+                    }
+                }
+            }
+            PageUtils.frontMessageBox(this, "导出完成");
+        }
+
+        private bool backTestSingleStock(string stockExchangeName, string stock)
+        {
+            Thread.Sleep(500);
+            //1.打开“挑选要分析的股票，合约或品种”界面
+            if (!PageUtils.toFuturesAnalysisPage(this, mainHandle))
+            {
+                return false;
+            }
+            //2.在“挑选要分析的股票，合约或品种”界面选择对应的股票
+            if (!chooseStock(stockExchangeName, stock))
+            {
+                return false;
+            }
+            if (!backTestSingleVarietyInner(stock, -1))
+            {
+                return false;
+            }
+            return true;
+        }
+
+        //选择股票
+        private bool chooseStock(string stockExchangeName, string stock)
+        {
+            List<IntPtr> wndHandles = WindowsApiUtils.findWindowHandlesByClassTitleFuzzy(CLASS_DIALOG, FuturesAnalysisPage.FUTURES_ANALYSIS_PAGE_TITLE);
+            if (wndHandles.Count == 0)
+            {
+                PageUtils.frontMessageBox(this, "打开“挑选要分析的股票，合约或品种”界面失败，未找到该界面");
+                return false;
+            }
+            else if (wndHandles.Count > 1)
+            {
+                PageUtils.frontMessageBox(this, "找到多个“挑选要分析的股票，合约或品种”界面，请关闭多余界面");
+                return false;
+            }
+            IntPtr handle = wndHandles[0];
+
+            AutomationElement targetWindow = AutomationElement.FromHandle(handle);
+            if (targetWindow != null)
+            {
+                WindowsApiUtils.clearOtherWindows(mainHandle, new List<IntPtr> { handle });
+                PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, FuturesAnalysisPage.AUTOMATION_ID_TREEVIEW_EXCHANGE);
+                PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Tree);
+                AutomationElement treeviewExchange = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
+                if (treeviewExchange != null)
+                {
+                    Condition condition2 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.TreeItem);
+                    AutomationElementCollection exchangeElementCollection = treeviewExchange.FindAll(TreeScope.Children, condition2);
+                    if (exchangeElementCollection != null && exchangeElementCollection.Count > 0)
+                    {
+                        foreach (AutomationElement exchangeAE in exchangeElementCollection)
+                        {
+                            string exchangeName = exchangeAE.Current.Name;
+                            if (stockExchangeName.Equals(exchangeName))
+                            {
+                                if (SimulateOperating.selectTreeItem(exchangeAE))
+                                {
+                                    PropertyCondition condition3 = new PropertyCondition(AutomationElement.AutomationIdProperty, FuturesAnalysisPage.AUTOMATION_ID_LISTBOX_VARIETY);
+                                    PropertyCondition condition4 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.List);
+                                    AutomationElement listBoxStock = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition3, condition4));
+                                    if (listBoxStock != null)
+                                    {
+                                        Condition condition5 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem);
+                                        AutomationElementCollection stockElementCollection = listBoxStock.FindAll(TreeScope.Children, condition5);
+                                        if (stockElementCollection != null && stockElementCollection.Count > 0)
+                                        {
+                                            foreach (AutomationElement stockAE in stockElementCollection)
+                                            {
+                                                if (stock.Equals(stockAE.Current.Name))
+                                                {
+                                                    if (SimulateOperating.selectTreeItem(stockAE))
+                                                    {
+                                                        PropertyCondition condition6 = new PropertyCondition(AutomationElement.AutomationIdProperty, FuturesAnalysisPage.AUTOMATION_ID_BUTTON_OK);
+                                                        PropertyCondition condition7 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
+                                                        AutomationElement buttonOK = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition6, condition7));
+                                                        if (buttonOK != null)
+                                                        {
+                                                            if (SimulateOperating.clickButton(buttonOK))
+                                                            {
+                                                                return true;
+                                                            }
+                                                            PageUtils.frontMessageBox(this, "点击“挑选要分析的股票，合约或品种”界面中的“确定”按钮失败");
+                                                            return false;
+                                                        }
+                                                        PageUtils.frontMessageBox(this, "未找到“挑选要分析的股票，合约或品种”界面“确定”按钮");
+                                                        return false;
+                                                    }
+                                                    PageUtils.frontMessageBox(this, "在“挑选要分析的股票，合约或品种”界面，选择股票：" + stock + "失败");
+                                                    return false;
+                                                }
+                                            }
+                                            PageUtils.frontMessageBox(this, "在“挑选要分析的股票，合约或品种”界面，未找到股票：" + stock);
+                                            return false;
+                                        }
+                                        else
+                                        {
+                                            PageUtils.frontMessageBox(this, "在“挑选要分析的股票，合约或品种”界面，股票为空");
+                                            return false;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        PageUtils.frontMessageBox(this, "未找到“挑选要分析的股票，合约或品种”界面中的股票列表");
+                                        return false;
+                                    }
+                                }
+                                else
+                                {
+                                    PageUtils.frontMessageBox(this, "选择“挑选要分析的股票，合约或品种”界面中的“" + exchangeAE.Current.Name + "”子项失败");
+                                    WindowsApiUtils.closeWindow(handle);
+                                    return false;
+                                }
+                            }
+                        }
+                        PageUtils.frontMessageBox(this, "在“挑选要分析的股票，合约或品种”界面，未找到股票：" + stock);
+                        return false;
+                    }
+                    else
+                    {
+                        PageUtils.frontMessageBox(this, "未找到“挑选要分析的股票，合约或品种”界面中的“品种”树形结构的子项");
+                        WindowsApiUtils.closeWindow(handle);
+                        return false;
+                    }
+                }
+                else
+                {
+                    PageUtils.frontMessageBox(this, "未找到“挑选要分析的股票，合约或品种”界面中的“品种”树形结构");
+                    WindowsApiUtils.closeWindow(handle);
+                    return false;
+                }
+            }
+            else
+            {
+                PageUtils.frontMessageBox(this, "未找到“挑选要分析的股票，合约或品种”界面");
+                WindowsApiUtils.closeWindow(handle);
+                return false;
+            }
         }
 
 
         //////////////////////////////////////////////////////////////////////////
         //补充数据
-        //private IntPtr supplyDataMainHandle;
-        private List<Exchange> supplyDataExchanges; //交易所对应的品种、合约
+        private List<Exchange> supplyDataExchanges; //期货交易所对应的品种、合约
+        private List<StockExchange> supplyDataStockExchanges;//股票交易所对应的股票
         private List<string> supplyDataCycles;
         private DateTime supplyDataFromDate;
 
@@ -1062,24 +1352,49 @@ namespace FuturesBackTestExportTool
             if (formChooseClient.ShowDialog() == DialogResult.OK)
             {
                 mainHandle = formChooseClient.getResult();
-                FormFuturesChooseVariety formFuturesChooseVariety = new FormFuturesChooseVariety(mainHandle);
-                if (formFuturesChooseVariety.ShowDialog() == DialogResult.OK)
+                FormChooseCategory formChooseCategory = new FormChooseCategory();
+                if (formChooseCategory.ShowDialog() == DialogResult.OK)
                 {
-                    supplyDataExchanges = formFuturesChooseVariety.getResult();
-                    FormChooseSupplyDataParams formChooseSupplyDataParams = new FormChooseSupplyDataParams();
-                    if (formChooseSupplyDataParams.ShowDialog() == DialogResult.OK)
+                    int category = formChooseCategory.getResult();
+                    if (category == 0)
                     {
-                        object[] supplyDataParams = formChooseSupplyDataParams.getResult();
-                        supplyDataCycles = (List<string>)supplyDataParams[0];
-                        supplyDataFromDate = (DateTime)supplyDataParams[1];
+                        FormFuturesChooseVariety formFuturesChooseVariety = new FormFuturesChooseVariety(mainHandle);
+                        if (formFuturesChooseVariety.ShowDialog() == DialogResult.OK)
+                        {
+                            supplyDataExchanges = formFuturesChooseVariety.getResult();
+                            FormChooseSupplyDataParams formChooseSupplyDataParams = new FormChooseSupplyDataParams();
+                            if (formChooseSupplyDataParams.ShowDialog() == DialogResult.OK)
+                            {
+                                object[] supplyDataParams = formChooseSupplyDataParams.getResult();
+                                supplyDataCycles = (List<string>)supplyDataParams[0];
+                                supplyDataFromDate = (DateTime)supplyDataParams[1];
 
-                        startSupplyData();
+                                startSupplyDataFutures();
+                            }
+                        }
+                    }
+                    else if (category == 1)
+                    {
+                        FormStockChooseVariety formStockChooseVariety = new FormStockChooseVariety(mainHandle);
+                        if (formStockChooseVariety.ShowDialog() == DialogResult.OK)
+                        {
+                            supplyDataStockExchanges = formStockChooseVariety.getResult();
+                            FormChooseSupplyDataParams formChooseSupplyDataParams = new FormChooseSupplyDataParams();
+                            if (formChooseSupplyDataParams.ShowDialog() == DialogResult.OK)
+                            {
+                                object[] supplyDataParams = formChooseSupplyDataParams.getResult();
+                                supplyDataCycles = (List<string>)supplyDataParams[0];
+                                supplyDataFromDate = (DateTime)supplyDataParams[1];
+
+                                startSupplyDataStock();
+                            }
+                        }
                     }
                 }
             }
         }
 
-        private void startSupplyData()
+        private void startSupplyDataFutures()
         {
             if (supplyDataExchanges == null || supplyDataExchanges.Count == 0)
             {
@@ -1103,7 +1418,7 @@ namespace FuturesBackTestExportTool
                 List<Variety> varieties = exchange.varieties;
                 if (varieties == null && varieties.Count == 0)
                 {
-                    Console.WriteLine(exchangeName + "中的品种为空");
+                    //Console.WriteLine(exchangeName + "中的品种为空");
                     continue;
                 }
                 foreach (Variety variety in varieties)
@@ -1112,7 +1427,7 @@ namespace FuturesBackTestExportTool
                     List<int> agreements = variety.agreements;
                     if (agreements == null || agreements.Count == 0)
                     {
-                        Console.WriteLine(exchangeName + "中" + varietyName + "中的合约为空");
+                        //Console.WriteLine(exchangeName + "中" + varietyName + "中的合约为空");
                         continue;
                     }
                     foreach (int i in agreements)
@@ -1124,13 +1439,52 @@ namespace FuturesBackTestExportTool
                     }
                 }
             }
-            frontMessageBox("补充历史数据完成");
+            PageUtils.frontMessageBox(this, "补充历史数据完成");
+        }
+
+        private void startSupplyDataStock()
+        {
+            if (supplyDataStockExchanges == null || supplyDataStockExchanges.Count == 0)
+            {
+                MessageBox.Show("未设置股票品种参数，请重新设置补充数据参数");
+                return;
+            }
+            if (supplyDataCycles == null || supplyDataCycles.Count == 0)
+            {
+                MessageBox.Show("未设置周期参数，请重新设置补充数据参数");
+                return;
+            }
+            if (supplyDataFromDate == null)
+            {
+                MessageBox.Show("未设置时间参数，请重新设置补充数据参数");
+                return;
+            }
+
+            foreach (StockExchange stockExchange in supplyDataStockExchanges)
+            {
+                string stockExchangeName = stockExchange.stockExchangeName;
+                List<String> stocks = stockExchange.stocks;
+                if (stocks == null && stocks.Count == 0)
+                {
+                    //Console.WriteLine(stockExchangeName + "中的股票为空");
+                    continue;
+                }
+                foreach (string stock in stocks)
+                {
+                    if (!supplyDataSingleStock(stockExchangeName, stock))
+                    {
+                        return;
+                    }
+                }
+            }
+            PageUtils.frontMessageBox(this, "补充历史数据完成");
         }
 
         private bool supplyDataSingleAgreement(string exchangeName, string varietyName, int agreement)
         {
+            Thread.Sleep(500);
             //1.打开“挑选要分析的股票，合约或品种”界面
-            if (!toFuturesAnalysisPage())
+            if (!PageUtils.toFuturesAnalysisPage(this, mainHandle))
             {
                 return false;
             }
@@ -1139,60 +1493,106 @@ namespace FuturesBackTestExportTool
             {
                 return false;
             }
-
-            if (!supplyDataSingleAgreementInner(supplyDataCycles, supplyDataFromDate))
+            //Console.WriteLine("补充数据，品种合约：" + varietyName + Variety.getAgreementName(agreement));
+            if (!supplyDataSingleVarietyInner(supplyDataCycles, supplyDataFromDate))
             {
                 return false;
             }
             return true;
         }
 
-        private bool supplyDataSingleAgreementInner(List<string> applyDataCycles, DateTime targetDate)
+        private bool supplyDataSingleStock(string stockExchangeName, string stock)
+        {
+            Thread.Sleep(500);
+            //1.打开“挑选要分析的股票，合约或品种”界面
+            if (!PageUtils.toFuturesAnalysisPage(this, mainHandle))
+            {
+                return false;
+            }
+            //2.在“挑选要分析的股票，合约或品种”界面选择对应的股票
+            if (!chooseStock(stockExchangeName, stock))
+            {
+                return false;
+            }
+            //Console.WriteLine("补充数据，股票：" + stock);
+            if (!supplyDataSingleVarietyInner(supplyDataCycles, supplyDataFromDate))
+            {
+                return false;
+            }
+            return true;
+        }
+
+        //重要：为单个品种（期货的品种+合约，或者股票）补充历史数据
+        private bool supplyDataSingleVarietyInner(List<string> applyDataCycles, DateTime targetDate)
         {
             if (applyDataCycles == null || applyDataCycles.Count == 0)
             {
-                frontMessageBox("未设置周期参数，请重新设置补充数据参数");
+                PageUtils.frontMessageBox(this, "未设置周期参数，请重新设置补充数据参数");
                 return false;
             }
             foreach (string applyDataCycle in applyDataCycles)
             {
+                //Console.WriteLine("补充数据，周期：" + applyDataCycle);
                 Thread.Sleep(500);
                 AutomationElement targetWindow = AutomationElement.FromHandle(mainHandle);
                 if (targetWindow == null)
                 {
-                    frontMessageBox("未找到“赢智程序化”主界面");
+                    PageUtils.frontMessageBox(this, "未找到“赢智程序化”主界面");
                     return false;
                 }
+                WindowsApiUtils.clearOtherWindows(mainHandle, null);
                 PropertyCondition condition0 = new PropertyCondition(AutomationElement.AutomationIdProperty, WH8MainPage.AUTOMATION_ID_PANE_MAIN);
                 PropertyCondition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Pane);
                 AutomationElement paneMain = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
                 if (paneMain == null)
                 {
-                    frontMessageBox("未找到主界面“K线图”控件");
+                    PageUtils.frontMessageBox(this, "未找到主界面“K线图”控件");
                     return false;
                 }
-                targetWindow.SetFocus();
-                SimulateOperating.rightClickAutomationElement(paneMain);
-                Thread.Sleep(1000);
+                //容错，右击K线图，弹出菜单
+                List<IntPtr> menuHandles = null;
+                int rightClickCount = 0;
+                while (rightClickCount < 3)
+                {
+                    WindowsApiUtils.clearOtherWindows(mainHandle, null);
+                    try
+                    {
+                        targetWindow.SetFocus();
+                    }
+                    catch (Exception e)
+                    {
+                        continue;
+                    }
+                    SimulateOperating.rightClickAutomationElement(paneMain);
+                    Thread.Sleep(1000);
 
-                List<IntPtr> menuHandles = WindowsApiUtils.findContextMenuHandles();
+                    menuHandles = WindowsApiUtils.findContextMenuHandles();
+                    if (menuHandles == null || menuHandles.Count == 0)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
                 if (menuHandles == null || menuHandles.Count == 0)
                 {
-                    frontMessageBox("未找到主界面上下文菜单");
+                    PageUtils.frontMessageBox(this, "未找到主界面上下文菜单");
                     return false;
                 }
                 IntPtr menuHandle = menuHandles[0];
                 AutomationElement menuAE = AutomationElement.FromHandle(menuHandle);
                 if (menuAE == null)
                 {
-                    frontMessageBox("未找到主界面上下文菜单");
+                    PageUtils.frontMessageBox(this, "未找到主界面上下文菜单");
                     return false;
                 }
                 Condition condition2 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.MenuItem);
                 AutomationElementCollection menuItemElementCollection = menuAE.FindAll(TreeScope.Children, condition2);
                 if (menuItemElementCollection == null || menuItemElementCollection.Count == 0)
                 {
-                    frontMessageBox("未找到主界面上下文菜单子项");
+                    PageUtils.frontMessageBox(this, "未找到主界面上下文菜单子项");
                     return false;
                 }
                 bool foundSupplyDataMenuItem = false;
@@ -1203,7 +1603,7 @@ namespace FuturesBackTestExportTool
                         foundSupplyDataMenuItem = true;
                         if (!SimulateOperating.clickButton(menuItemAE))
                         {
-                            frontMessageBox("点击主界面上下文菜单中的“补充历史数据”子项失败");
+                            PageUtils.frontMessageBox(this, "点击主界面上下文菜单中的“补充历史数据”子项失败");
                             return false;
                         }
                         break;
@@ -1211,36 +1611,37 @@ namespace FuturesBackTestExportTool
                 }
                 if (!foundSupplyDataMenuItem)
                 {
-                    frontMessageBox("未找到主界面上下文菜单中的“补充历史数据”子项");
+                    PageUtils.frontMessageBox(this, "未找到主界面上下文菜单中的“补充历史数据”子项");
                     return false;
                 }
                 Thread.Sleep(1000);
                 List<IntPtr> supplyDataPageHandles = WindowsApiUtils.findWindowHandlesByClassTitleFuzzy(CLASS_DIALOG, SupplyDataPage.SUPPLY_DATA_PAGE_TITLE);
                 if (supplyDataPageHandles == null || supplyDataPageHandles.Count == 0)
                 {
-                    frontMessageBox("未找到“补数据”界面");
+                    PageUtils.frontMessageBox(this, "未找到“补数据”界面");
                     return false;
                 }
                 IntPtr supplyDataPageHandle = supplyDataPageHandles[0];
                 AutomationElement supplyDataPageAE = AutomationElement.FromHandle(supplyDataPageHandle);
                 if (supplyDataPageAE == null)
                 {
-                    frontMessageBox("未找到“补数据”界面");
+                    PageUtils.frontMessageBox(this, "未找到“补数据”界面");
                     return false;
                 }
+                WindowsApiUtils.clearOtherWindows(mainHandle, new List<IntPtr> { supplyDataPageHandle });
                 PropertyCondition condition3 = new PropertyCondition(AutomationElement.AutomationIdProperty, SupplyDataPage.AUTOMATION_ID_COMBO_BOX_CYCLE);
                 PropertyCondition condition4 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ComboBox);
                 AutomationElement comboBoxCycle = supplyDataPageAE.FindFirst(TreeScope.Descendants, new AndCondition(condition3, condition4));
                 if (comboBoxCycle == null)
                 {
-                    frontMessageBox("未找到“补数据”界面中“周期选择”下拉框");
+                    PageUtils.frontMessageBox(this, "未找到“补数据”界面中“周期选择”下拉框");
                     return false;
                 }
                 PropertyCondition condition5 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem);
                 AutomationElementCollection cycleElementCollection = comboBoxCycle.FindAll(TreeScope.Subtree, condition5);
                 if (cycleElementCollection == null || cycleElementCollection.Count == 0)
                 {
-                    frontMessageBox("未找到“补数据”界面中“周期选择”下拉框的子项");
+                    PageUtils.frontMessageBox(this, "未找到“补数据”界面中“周期选择”下拉框的子项");
                     return false;
                 }
                 bool foundCycle = false;
@@ -1251,14 +1652,14 @@ namespace FuturesBackTestExportTool
                         foundCycle = true;
                         if (!SimulateOperating.selectComboBoxItem(cycleAE))
                         {
-                            frontMessageBox("在“补数据”界面，选择周期失败");
+                            PageUtils.frontMessageBox(this, "在“补数据”界面，选择周期失败");
                             return false;
                         }
                     }
                 }
                 if (!foundCycle)
                 {
-                    frontMessageBox("未找到“补数据”界面中对应的周期");
+                    PageUtils.frontMessageBox(this, "未找到“补数据”界面中对应的周期");
                     return false;
                 }
 
@@ -1267,13 +1668,13 @@ namespace FuturesBackTestExportTool
                 AutomationElement checkboxDownloadAllData = supplyDataPageAE.FindFirst(TreeScope.Descendants, new AndCondition(condition6, condition7));
                 if (checkboxDownloadAllData == null)
                 {
-                    frontMessageBox("未找到“补数据”界面中“全部历史数据”复选框");
+                    PageUtils.frontMessageBox(this, "未找到“补数据”界面中“全部历史数据”复选框");
                     return false;
                 }
 
                 if (!SimulateOperating.toggleCheckbox(checkboxDownloadAllData))
                 {
-                    frontMessageBox("勾选“补数据”界面中“全部历史数据”复选框失败");
+                    PageUtils.frontMessageBox(this, "勾选“补数据”界面中“全部历史数据”复选框失败");
                     return false;
                 }
 
@@ -1282,7 +1683,7 @@ namespace FuturesBackTestExportTool
                 AutomationElement buttonDownload = supplyDataPageAE.FindFirst(TreeScope.Descendants, new AndCondition(condition8, condition9));
                 if (buttonDownload == null)
                 {
-                    frontMessageBox("未找到“补数据”界面中“下载”按钮");
+                    PageUtils.frontMessageBox(this, "未找到“补数据”界面中“下载”按钮");
                     return false;
                 }
                 PropertyCondition condition10 = new PropertyCondition(AutomationElement.AutomationIdProperty, SupplyDataPage.AUTOMATION_ID_DATE_PICK_DOWNLOAD);
@@ -1290,7 +1691,7 @@ namespace FuturesBackTestExportTool
                 AutomationElement datePickDownload = supplyDataPageAE.FindFirst(TreeScope.Descendants, new AndCondition(condition10, condition11));
                 if (datePickDownload == null)
                 {
-                    frontMessageBox("未找到“补数据”界面中“日期”控件");
+                    PageUtils.frontMessageBox(this, "未找到“补数据”界面中“日期”控件");
                     return false;
                 }
                 string downloadDate = datePickDownload.Current.Name;
@@ -1299,39 +1700,49 @@ namespace FuturesBackTestExportTool
                     WindowsApiUtils.closeWindow(supplyDataPageHandle);
                     continue;
                 }
-                //while(true)容错
+
+
+                WindowsApiUtils.clearOtherWindows(mainHandle, new List<IntPtr> { supplyDataPageHandle });
+                if (!SimulateOperating.clickButton(buttonDownload))
+                {
+                    PageUtils.frontMessageBox(this, "点击“补数据”界面中“下载”按钮失败");
+                    return false;
+                }
+
+                int downloadDateUnchangedCount = 0;
+                string lastDownloadDate = null;
                 while (true)
                 {
-                    if (!SimulateOperating.clickButton(buttonDownload))
-                    {
-                        frontMessageBox("点击“补数据”界面中“下载”按钮失败");
-                        return false;
-                    }
+                    Thread.Sleep(3000);
+                    WindowsApiUtils.clearOtherWindows(mainHandle, new List<IntPtr> { supplyDataPageHandle });
+                    PropertyCondition condition12 = new PropertyCondition(AutomationElement.AutomationIdProperty, SupplyDataPage.AUTOMATION_ID_LABEL_MESSAGE);
+                    PropertyCondition condition13 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Text);
+                    AutomationElement lableMessage = supplyDataPageAE.FindFirst(TreeScope.Descendants, new AndCondition(condition12, condition13));
 
-                    bool downloadSuccess = false;
-                    while (true)
+                    downloadDate = datePickDownload.Current.Name;
+                    if (downloadDate.Equals(lastDownloadDate))
                     {
-                        Thread.Sleep(3000);
-                        //TODO clear other window
-                        PropertyCondition condition12 = new PropertyCondition(AutomationElement.AutomationIdProperty, SupplyDataPage.AUTOMATION_ID_LABEL_MESSAGE);
-                        PropertyCondition condition13 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Text);
-                        AutomationElement lableMessage = supplyDataPageAE.FindFirst(TreeScope.Descendants, new AndCondition(condition12, condition13));
-
-                        downloadDate = datePickDownload.Current.Name;
-                        Console.WriteLine(downloadDate);
-                        if ((lableMessage != null && lableMessage.Current.Name.Contains("下载完成")) || Utils.compareDownloadDate(downloadDate, targetDate, applyDataCycle))
+                        downloadDateUnchangedCount++;
+                        if (downloadDateUnchangedCount >= 10)
                         {
-                            Thread.Sleep(1000);
-                            downloadSuccess = true;
+                            WindowsApiUtils.closeWindow(supplyDataPageHandle);
                             break;
                         }
                     }
-                    if (downloadSuccess)
+                    else
                     {
+                        lastDownloadDate = downloadDate;
+                        downloadDateUnchangedCount = 0;
+                    }
+                    //Console.WriteLine(downloadDate);
+                    if ((lableMessage != null && lableMessage.Current.Name.Contains("下载完成")) || Utils.compareDownloadDate(downloadDate, targetDate, applyDataCycle))
+                    {
+                        //Thread.Sleep(1000);
                         WindowsApiUtils.closeWindow(supplyDataPageHandle);
                         break;
                     }
                 }
+
             }
             return true;
         }

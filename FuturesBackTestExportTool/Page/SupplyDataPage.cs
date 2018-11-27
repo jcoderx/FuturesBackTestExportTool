@@ -14,5 +14,7 @@
         public const string AUTOMATION_ID_DATE_PICK_DOWNLOAD = "1628";
         //下载信息
         public const string AUTOMATION_ID_LABEL_MESSAGE = "3667";
+
+        public const string AUTOMATION_ID_LABEL_DATE = "4444";
     }
 }

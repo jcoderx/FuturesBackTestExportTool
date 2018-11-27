@@ -64,6 +64,8 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Page\SupplyDataHintPage.cs" />
+    <Compile Include="WarningCode.cs" />
     <Compile Include="ExcelExport.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
@@ -125,8 +127,15 @@
     <Compile Include="FormMain.Designer.cs">
       <DependentUpon>FormMain.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormStockChooseVariety.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormStockChooseVariety.Designer.cs">
+      <DependentUpon>FormStockChooseVariety.cs</DependentUpon>
+    </Compile>
     <Compile Include="Model\Exchange.cs" />
     <Compile Include="Model\ModelCategory.cs" />
+    <Compile Include="Model\StockExchange.cs" />
     <Compile Include="Model\TimeCycle.cs" />
     <Compile Include="Model\Variety.cs" />
     <Compile Include="MouseEventFlag.cs" />
@@ -145,6 +154,7 @@
     <Compile Include="SimulateMouseOperating.cs" />
     <Compile Include="SimulateOperating.cs" />
     <Compile Include="ThreeStateTreeview.cs" />
+    <Compile Include="PageUtils.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="WindowsApi.cs" />
     <Compile Include="WindowsApiUtils.cs" />
@@ -177,6 +187,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FormMain.resx">
       <DependentUpon>FormMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormStockChooseVariety.resx">
+      <DependentUpon>FormStockChooseVariety.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

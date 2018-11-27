@@ -141,29 +141,44 @@ namespace FuturesBackTestExportTool
             {
                 return false;
             }
+            const int EX_DAYS = 3;
             int days = 0;
             switch (cycle)
             {
                 case "TICK":
-                    days = 3;
+                    days = 3 + EX_DAYS;
                     break;
                 case "1秒钟":
-                    days = 3;
+                    days = 3 + EX_DAYS;
                     break;
                 case "1分钟":
-                    days = 21;
+                    days = 21 + EX_DAYS;
                     break;
                 case "15分钟":
-                    days = 365;
+                    days = 365 + EX_DAYS;
                     break;
                 case "1日":
-                    days = 3650;
+                    days = 3650 + EX_DAYS;
                     break;
                 default:
                     return false;
             }
             downloadDate = downloadDate.AddDays(days);
             return compareDate(downloadDate, targetDate) < 0;
+        }
+
+        public static int compareDateString(string dateString0,string dateString1)
+        {
+            try
+            {
+                DateTime dt0 = DateTime.ParseExact(dateString0, "yyyy/M/d", System.Globalization.CultureInfo.CurrentCulture);
+                DateTime dt1 = DateTime.ParseExact(dateString1, "yyyy/M/d", System.Globalization.CultureInfo.CurrentCulture);
+                return compareDate(dt0, dt1);
+            }
+            catch (Exception e)
+            {
+                return 0;
+            }
         }
     }
 }

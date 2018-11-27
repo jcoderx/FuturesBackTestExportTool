@@ -13,9 +13,15 @@ namespace FuturesBackTestExportTool
             object temp;
             if (ae.TryGetCurrentPattern(InvokePattern.Pattern, out temp))
             {
-                InvokePattern pattern = temp as InvokePattern;
-                pattern.Invoke();
-                return true;
+                try
+                {
+                    InvokePattern pattern = temp as InvokePattern;
+                    pattern.Invoke();
+                    return true;
+                }catch(Exception e)
+                {
+                    return false;
+                }
             }
             return false;
         }
@@ -56,6 +62,18 @@ namespace FuturesBackTestExportTool
                 {
                     return false;
                 }
+            }
+            return false;
+        }
+
+        public static bool selectTreeItem(AutomationElement ae)
+        {
+            object temp;
+            if (ae.TryGetCurrentPattern(SelectionItemPattern.Pattern, out temp))
+            {
+                SelectionItemPattern pattern = temp as SelectionItemPattern;
+                pattern.Select();
+                return true;
             }
             return false;
         }

@@ -30,11 +30,14 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormFuturesChooseVariety));
             this.treeviewExchange = new FuturesBackTestExportTool.ThreeStateTreeview();
-            this.button1 = new System.Windows.Forms.Button();
+            this.buttonNext = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // treeviewExchange
             // 
+            this.treeviewExchange.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.treeviewExchange.CheckBoxes = true;
             this.treeviewExchange.DrawMode = System.Windows.Forms.TreeViewDrawMode.OwnerDrawAll;
             this.treeviewExchange.Font = new System.Drawing.Font("宋体", 11F);
@@ -43,23 +46,23 @@
             this.treeviewExchange.Size = new System.Drawing.Size(492, 281);
             this.treeviewExchange.TabIndex = 0;
             // 
-            // button1
+            // buttonNext
             // 
-            this.button1.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.button1.Location = new System.Drawing.Point(208, 289);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 2;
-            this.button1.Text = "下一步";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.buttonNext.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.buttonNext.Location = new System.Drawing.Point(208, 289);
+            this.buttonNext.Name = "buttonNext";
+            this.buttonNext.Size = new System.Drawing.Size(75, 23);
+            this.buttonNext.TabIndex = 2;
+            this.buttonNext.Text = "下一步";
+            this.buttonNext.UseVisualStyleBackColor = true;
+            this.buttonNext.Click += new System.EventHandler(this.buttonNext_Click);
             // 
             // FormFuturesChooseVariety
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(491, 320);
-            this.Controls.Add(this.button1);
+            this.Controls.Add(this.buttonNext);
             this.Controls.Add(this.treeviewExchange);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "FormFuturesChooseVariety";
@@ -73,6 +76,6 @@
         #endregion
 
         private ThreeStateTreeview treeviewExchange;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button buttonNext;
     }
 }
