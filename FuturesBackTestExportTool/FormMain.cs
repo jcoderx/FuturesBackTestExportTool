@@ -1856,14 +1856,13 @@ namespace FuturesBackTestExportTool
             List<IntPtr> technicalIndicatorPageHandles = WindowsApiUtils.findWindowHandlesByClassTitleFuzzy(CLASS_DIALOG, TechnicalIndicatorPage.TECHNICAL_INDICATIOR_PAGE_TITLE);
             if (technicalIndicatorPageHandles == null || technicalIndicatorPageHandles.Count == 0)
             {
-                //PageUtils.frontMessageBox(this, "未找到“设置技术指标”界面");
                 return;
             }
             IntPtr technicalIndicatorPageHandle = technicalIndicatorPageHandles[0];
             AutomationElement technicalIndicatorPageWindow = AutomationElement.FromHandle(technicalIndicatorPageHandle);
             if (technicalIndicatorPageWindow == null)
             {
-                //PageUtils.frontMessageBox(this, "未找到“设置技术指标”界面");
+                WindowsApiUtils.closeWindow(technicalIndicatorPageHandle);
                 return;
             }
             WindowsApiUtils.clearOtherWindows(mainHandle, new List<IntPtr> { technicalIndicatorPageHandle });
@@ -1872,75 +1871,31 @@ namespace FuturesBackTestExportTool
             AutomationElement listBoxModel = technicalIndicatorPageWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
             if (listBoxModel == null)
             {
-                //PageUtils.frontMessageBox(this, "未找到“设置技术指标”界面中模型列表");
+                WindowsApiUtils.closeWindow(technicalIndicatorPageHandle);
                 return;
             }
             Condition condition2 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem);
             AutomationElementCollection modelElementCollection = listBoxModel.FindAll(TreeScope.Children, condition2);
             if (modelElementCollection != null && modelElementCollection.Count > 0)
             {
-                //for test
-                StringBuilder sb = new StringBuilder();
-                foreach (AutomationElement modelAE in modelElementCollection)
-                {
-                    sb.Append(modelAE.Current.Name+",");
-                }
-
                 foreach (AutomationElement modelAE in modelElementCollection)
                 {
                     if (modelAE.Current.Name.Equals(modelName))
                     {
                         if (SimulateOperating.selectTreeItem(modelAE))
                         {
-                            //TODO 校验是否选择错误
-                            Thread.Sleep(1000);
-                            //bool selected = SimulateOperating.isItemSelected(modelAE);
-                            //Console.WriteLine("是否选中:" + selected);
-                            //if (!selected)
-                            //{
-                            //    MessageBox.Show("选中出错");
-                            //}
-
                             PropertyCondition condition3 = new PropertyCondition(AutomationElement.AutomationIdProperty, TechnicalIndicatorPage.AUTOMATION_ID_BUTTON_REMOVE);
                             PropertyCondition condition4 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
                             AutomationElement buttonRemove = technicalIndicatorPageWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition3, condition4));
-                            SimulateOperating.clickButton(buttonRemove);
+                            //调了大半夜的bug，使用clickButton()可能触发两次连续的点击事件
+                            //SimulateOperating.clickButton(buttonRemove);
+                            SimulateOperating.leftClickAutomationElement(buttonRemove);
                         }
                         break;
                     }
                 }
-                //for test
-                Thread.Sleep(500);
-                Condition condition5 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem);
-                AutomationElementCollection xElementCollection = listBoxModel.FindAll(TreeScope.Children, condition5);
-                if (xElementCollection != null && xElementCollection.Count > 0)
-                {
-                    bool has = false;
-                    foreach (AutomationElement modelAE in xElementCollection)
-                    {
-                        if(modelAE.Current.Name.Equals("K线") || modelAE.Current.Name.Equals("WK"))
-                        {
-                            has = true;
-                        }
-                    }
-                    if (!has)
-                    {
-                        MessageBox.Show("没有WK或K线，检查:"+sb.ToString());
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("空----"+sb.ToString());
-                }
-
             }
-            Thread.Sleep(500);
             WindowsApiUtils.closeWindow(technicalIndicatorPageHandle);
-            //PropertyCondition condition5 = new PropertyCondition(AutomationElement.AutomationIdProperty, TechnicalIndicatorPage.AUTOMATION_ID_BUTTON_OK);
-            //PropertyCondition condition6 = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
-            //AutomationElement buttonOK = technicalIndicatorPageWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition5, condition6));
-            //SimulateOperating.clickButton(buttonOK);
-            //return true;
         }
     }
 }

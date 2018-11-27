@@ -8,6 +8,9 @@ namespace FuturesBackTestExportTool
     //模拟操作
     public class SimulateOperating
     {
+        //点击button，使用该方法点击按钮可能触发两次连续的点击操作，
+        //如果连续触发两次点击对操作有影响，请用leftClickAutomationElement()方法代替。
+        //UIAutomation框架不靠谱啊
         public static bool clickButton(AutomationElement ae)
         {
             object temp;
@@ -126,6 +129,15 @@ namespace FuturesBackTestExportTool
         }
 
         public static void clickAutomationElement(AutomationElement ae)
+        {
+            Rect rect = ae.Current.BoundingRectangle;
+            int incrementX = (int)(rect.Left + rect.Width / 2);
+            int incrementY = (int)(rect.Top + rect.Height / 2);
+            SetCursorPos(incrementX, incrementY);
+            SimulateMouseOperating.ClickLeftMouse(incrementX, incrementY);
+        }
+
+        public static void leftClickAutomationElement(AutomationElement ae)
         {
             Rect rect = ae.Current.BoundingRectangle;
             int incrementX = (int)(rect.Left + rect.Width / 2);
