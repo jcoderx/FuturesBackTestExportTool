@@ -209,15 +209,12 @@ namespace FuturesBackTestExportTool
                 return false;
             }
             //for report
-            VarietyReport varietyReport = new VarietyReport();
-            varietyReport.varietyName = varietyName;
-            varietyReport.agreement = agreement;
-            varietyReport.startingDate = startingEndingDate[0];
-            varietyReport.endingDate = startingEndingDate[1];
-            List<CycleReport> cycleReports = new List<CycleReport>();
-            varietyReport.cycleReports = cycleReports;
-            foreach (TimeCycle cycle in cycles)
+            ExportReportExcel exportReportExcel = new ExportReportExcel();
+            exportReportExcel.exportVariety(varietyName, agreement, startingEndingDate[0], startingEndingDate[1]);
+            
+            for(int cycleIndex = 0; cycleIndex < cycles.Count; cycleIndex++)
             {
+                TimeCycle cycle = cycles[cycleIndex];
                 if (!backTestSingleCycle(cycle))
                 {
                     return false;
@@ -225,10 +222,8 @@ namespace FuturesBackTestExportTool
                 //TODO 容错
                 waitKLine();
                 //for report
-                CycleReport cycleReport = new CycleReport();
-                cycleReport.cycleName = cycle.getName();
-                List<ModelReport> modelReports = new List<ModelReport>();
-                cycleReport.modelReports = modelReports;
+                exportReportExcel.exportCycle(cycle.getName(), cycleIndex);
+                
                 //4.选择模型
                 if (modelCategories == null || modelCategories.Count == 0)
                 {
@@ -249,10 +244,10 @@ namespace FuturesBackTestExportTool
                             }
                             ModelReport modelReport = new ModelReport();
                             modelReport.modelName = model;
-                            modelReports.Add(modelReport);
                             //容错，不支持的模型
                             if (warningCodeModel == WarningCode.WARNING_UNSUPPORTED_MODEL)
                             {
+                                exportReportExcel.exportReport(modelReport,cycleIndex);
                                 continue;
                             }
                             //容错，尽可能的等待K线绘制完成
@@ -284,6 +279,7 @@ namespace FuturesBackTestExportTool
                             }
                             if (!chooseStartingEndingTimeSuccess)
                             {
+                                exportReportExcel.exportReport(modelReport, cycleIndex);
                                 continue;
                             }
 
@@ -291,12 +287,11 @@ namespace FuturesBackTestExportTool
                             {
                                 //Console.WriteLine("获取回测报告失败");
                             }
+                            exportReportExcel.exportReport(modelReport, cycleIndex);
                         }
                     }
                 }
-                cycleReports.Add(cycleReport);
             }
-            new ExcelExport().exportExcel(varietyReport);
             return true;
         }
 

@@ -24,7 +24,11 @@ namespace FuturesBackTestExportTool
                 AutomationElement buttonHangqing = targetWindow.FindFirst(TreeScope.Descendants, new AndCondition(condition0, condition1));
                 if (buttonHangqing != null)
                 {
-                    SimulateOperating.clickButton(buttonHangqing);
+                    //这里突然一天就不行了11.29，愁人
+                    //SimulateOperating.clickButton(buttonHangqing);
+                    targetWindow.SetFocus();
+                    SimulateOperating.leftClickAutomationElement(buttonHangqing);
+                    
                     Thread.Sleep(500);
 
                     PropertyCondition condition2 = new PropertyCondition(AutomationElement.AutomationIdProperty, WH8MainPage.AUTOMATION_ID_TREEVIEW_SHUJU);

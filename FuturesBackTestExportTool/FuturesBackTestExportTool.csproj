@@ -64,6 +64,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExportReportExcel.cs" />
     <Compile Include="FormChooseGraduallyBackTest.cs">
       <SubType>Form</SubType>
     </Compile>

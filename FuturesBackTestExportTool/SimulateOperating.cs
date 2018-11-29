@@ -10,7 +10,7 @@ namespace FuturesBackTestExportTool
     {
         //点击button，使用该方法点击按钮可能触发两次连续的点击操作，
         //如果连续触发两次点击对操作有影响，请用leftClickAutomationElement()方法代替。
-        //UIAutomation框架不靠谱啊
+        //UIAutomation框架不靠谱啊，此方法非常不靠谱
         public static bool clickButton(AutomationElement ae)
         {
             object temp;
@@ -21,7 +21,8 @@ namespace FuturesBackTestExportTool
                     InvokePattern pattern = temp as InvokePattern;
                     pattern.Invoke();
                     return true;
-                }catch(Exception e)
+                }
+                catch (Exception e)
                 {
                     return false;
                 }
