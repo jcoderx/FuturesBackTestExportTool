@@ -211,8 +211,8 @@ namespace FuturesBackTestExportTool
             //for report
             ExportReportExcel exportReportExcel = new ExportReportExcel();
             exportReportExcel.exportVariety(varietyName, agreement, startingEndingDate[0], startingEndingDate[1]);
-            
-            for(int cycleIndex = 0; cycleIndex < cycles.Count; cycleIndex++)
+
+            for (int cycleIndex = 0; cycleIndex < cycles.Count; cycleIndex++)
             {
                 TimeCycle cycle = cycles[cycleIndex];
                 if (!backTestSingleCycle(cycle))
@@ -223,7 +223,7 @@ namespace FuturesBackTestExportTool
                 waitKLine();
                 //for report
                 exportReportExcel.exportCycle(cycle.getName(), cycleIndex);
-                
+
                 //4.选择模型
                 if (modelCategories == null || modelCategories.Count == 0)
                 {
@@ -247,7 +247,7 @@ namespace FuturesBackTestExportTool
                             //容错，不支持的模型
                             if (warningCodeModel == WarningCode.WARNING_UNSUPPORTED_MODEL)
                             {
-                                exportReportExcel.exportReport(modelReport,cycleIndex);
+                                exportReportExcel.exportReport(modelReport, cycleIndex);
                                 continue;
                             }
                             //容错，尽可能的等待K线绘制完成
@@ -1756,6 +1756,7 @@ namespace FuturesBackTestExportTool
             return true;
         }
 
+        //右击弹出菜单可能不是全部，而是三四项，不知道为什么
         private bool openContextMenuAndSelectMenu(string menuName)
         {
             Thread.Sleep(500);
@@ -1828,7 +1829,7 @@ namespace FuturesBackTestExportTool
                     foundSupplyDataMenuItem = true;
                     if (!SimulateOperating.clickButton(menuItemAE))
                     {
-                        PageUtils.frontMessageBox(this, "点击主界面上下文菜单中的“补充历史数据”子项失败");
+                        PageUtils.frontMessageBox(this, "点击主界面上下文菜单中的“" + menuName + "”子项失败");
                         return false;
                     }
                     break;
@@ -1836,7 +1837,8 @@ namespace FuturesBackTestExportTool
             }
             if (!foundSupplyDataMenuItem)
             {
-                PageUtils.frontMessageBox(this, "未找到主界面上下文菜单中的“补充历史数据”子项");
+                //右击弹出菜单可能不是全部，而是三四项，不知道为什么，去掉提示信息
+                //PageUtils.frontMessageBox(this, "未找到主界面上下文菜单中的“" + menuName + "”子项");
                 return false;
             }
             else
@@ -1875,7 +1877,7 @@ namespace FuturesBackTestExportTool
             {
                 foreach (AutomationElement modelAE in modelElementCollection)
                 {
-                    if (modelAE.Current.Name.Equals(modelName))
+                    if (modelAE.Current.Name.Equals(modelName.Replace(" RUMI","")))
                     {
                         if (SimulateOperating.selectTreeItem(modelAE))
                         {
@@ -1885,6 +1887,7 @@ namespace FuturesBackTestExportTool
                             //调了大半夜的bug，使用clickButton()可能触发两次连续的点击事件
                             //SimulateOperating.clickButton(buttonRemove);
                             SimulateOperating.leftClickAutomationElement(buttonRemove);
+                            Thread.Sleep(500);
                         }
                         break;
                     }

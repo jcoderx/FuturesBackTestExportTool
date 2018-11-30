@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormStockChooseVariety));
             this.buttonNext = new System.Windows.Forms.Button();
             this.treeviewStockExchange = new FuturesBackTestExportTool.ThreeStateTreeview();
             this.SuspendLayout();
@@ -63,6 +64,7 @@
             this.ClientSize = new System.Drawing.Size(491, 320);
             this.Controls.Add(this.buttonNext);
             this.Controls.Add(this.treeviewStockExchange);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "FormStockChooseVariety";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "请选择品种（股票）";

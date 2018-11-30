@@ -193,7 +193,7 @@ namespace FuturesBackTestExportTool
 
                 //期望模型名称和实际模型名称不一致，则不导出数据
                 bool isErrorData = false;
-                if (!modelReport.modelName.Equals(modelReport.realisticModelName))
+                if (!modelReport.modelName.Equals(modelReport.realisticModelName) && !modelReport.modelName.Equals(modelReport.realisticModelName + " RUMI"))
                 {
                     isErrorData = true;
                 }

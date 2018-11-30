@@ -247,5 +247,51 @@ namespace FuturesBackTestExportTool
             this.TopMost = true;
             this.TopMost = false;
         }
+
+        private void checkedAllAgreement(string agreement, bool isChecked)
+        {
+            TreeNodeCollection exchangeNodes = this.treeviewExchange.Nodes;
+            if (exchangeNodes != null && exchangeNodes.Count > 0)
+            {
+                foreach (TreeNode exchangeNode in exchangeNodes)
+                {
+                    TreeNodeCollection varietyNodes = exchangeNode.Nodes;
+                    if (varietyNodes != null && varietyNodes.Count > 0)
+                    {
+                        foreach (TreeNode varietyNode in varietyNodes)
+                        {
+                            TreeNodeCollection agreementNodes = varietyNode.Nodes;
+                            if (agreementNodes != null && agreementNodes.Count > 0)
+                            {
+
+                                foreach (TreeNode agreementNode in agreementNodes)
+                                {
+                                    if (agreement.Equals(agreementNode.Text))
+                                    {
+                                        agreementNode.Checked = isChecked;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            this.treeviewExchange.Refresh();
+        }
+
+        private void checkBoxIndex_CheckedChanged(object sender, EventArgs e)
+        {
+            checkedAllAgreement("指数", this.checkBoxIndex.Checked);
+        }
+
+        private void checkBoxDominant_CheckedChanged(object sender, EventArgs e)
+        {
+            checkedAllAgreement("主力", this.checkBoxDominant.Checked);
+        }
+
+        private void checkBoxContinuous_CheckedChanged(object sender, EventArgs e)
+        {
+            checkedAllAgreement("连续", this.checkBoxContinuous.Checked);
+        }
     }
 }
