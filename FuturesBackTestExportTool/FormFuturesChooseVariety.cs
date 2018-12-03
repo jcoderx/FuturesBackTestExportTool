@@ -196,7 +196,6 @@ namespace FuturesBackTestExportTool
                                     if (agreementNode.Checked)
                                     {
                                         string agreementName = agreementNode.Text;
-                                        Console.WriteLine(agreementName);
                                         hasAgreementChecked = true;
                                         hasVarietyChecked = true;
                                         switch (agreementName)
@@ -232,7 +231,7 @@ namespace FuturesBackTestExportTool
                 MessageBox.Show("请选择品种及合约");
                 return;
             }
-
+            //testPrint();
             this.DialogResult = DialogResult.OK;
             this.Close();
         }
@@ -292,6 +291,40 @@ namespace FuturesBackTestExportTool
         private void checkBoxContinuous_CheckedChanged(object sender, EventArgs e)
         {
             checkedAllAgreement("连续", this.checkBoxContinuous.Checked);
+        }
+
+        //for test
+        private void testPrint()
+        {
+            int i = 0;
+            TreeNodeCollection exchangeNodes = this.treeviewExchange.Nodes;
+            if (exchangeNodes != null && exchangeNodes.Count > 0)
+            {
+                foreach (TreeNode exchangeNode in exchangeNodes)
+                {
+                    TreeNodeCollection varietyNodes = exchangeNode.Nodes;
+                    if (varietyNodes != null && varietyNodes.Count > 0)
+                    {
+                        foreach (TreeNode varietyNode in varietyNodes)
+                        {
+                            TreeNodeCollection agreementNodes = varietyNode.Nodes;
+                            if (agreementNodes != null && agreementNodes.Count > 0)
+                            {
+
+                                foreach (TreeNode agreementNode in agreementNodes)
+                                {
+                                    if (agreementNode.Checked)
+                                    {
+                                        i++;
+                                        Console.WriteLine(i + ":::" + varietyNode.Text + "," + agreementNode.Text);
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

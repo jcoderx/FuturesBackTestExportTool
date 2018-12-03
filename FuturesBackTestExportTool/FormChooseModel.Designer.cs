@@ -39,7 +39,6 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.treeviewModel.CheckBoxes = true;
-            this.treeviewModel.DrawMode = System.Windows.Forms.TreeViewDrawMode.OwnerDrawAll;
             this.treeviewModel.Font = new System.Drawing.Font("宋体", 11F);
             this.treeviewModel.Location = new System.Drawing.Point(0, 0);
             this.treeviewModel.Name = "treeviewModel";

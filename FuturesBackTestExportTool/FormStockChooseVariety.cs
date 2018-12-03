@@ -203,6 +203,7 @@ namespace FuturesBackTestExportTool
                 MessageBox.Show("请选择股票");
                 return;
             }
+            testPrint();
             this.DialogResult = DialogResult.OK;
             this.Close();
         }
@@ -210,6 +211,30 @@ namespace FuturesBackTestExportTool
         public List<StockExchange> getResult()
         {
             return stockExchanges;
+        }
+
+        //for test
+        private void testPrint()
+        {
+            TreeNodeCollection stockExchangeNodes = this.treeviewStockExchange.Nodes;
+            if (stockExchangeNodes != null && stockExchangeNodes.Count > 0)
+            {
+                foreach (TreeNode stockExchangeNode in stockExchangeNodes)
+                {
+
+                    TreeNodeCollection varietyNodes = stockExchangeNode.Nodes;
+                    if (varietyNodes != null && varietyNodes.Count > 0)
+                    {
+                        foreach (TreeNode varietyNode in varietyNodes)
+                        {
+                            if (varietyNode.Checked)
+                            {
+                                Console.WriteLine(stockExchangeNode.Text+","+ varietyNode.Text);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

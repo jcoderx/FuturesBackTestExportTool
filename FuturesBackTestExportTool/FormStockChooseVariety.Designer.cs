@@ -50,7 +50,6 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.treeviewStockExchange.CheckBoxes = true;
-            this.treeviewStockExchange.DrawMode = System.Windows.Forms.TreeViewDrawMode.OwnerDrawAll;
             this.treeviewStockExchange.Font = new System.Drawing.Font("宋体", 11F);
             this.treeviewStockExchange.Location = new System.Drawing.Point(0, 0);
             this.treeviewStockExchange.Name = "treeviewStockExchange";
