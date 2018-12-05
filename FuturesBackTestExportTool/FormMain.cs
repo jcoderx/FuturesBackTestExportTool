@@ -219,7 +219,15 @@ namespace FuturesBackTestExportTool
                 {
                     return false;
                 }
-                //TODO 容错
+                //容错，尽可能的等待K线绘制完成
+                waitKLine();
+                //5.选择起止时间
+                int startingEndingDateWarningCode;
+                if (!chooseStartingEndingTime(startingEndingDate, out startingEndingDateWarningCode))
+                {
+                    return false;
+                }
+                //容错，尽可能的等待K线绘制完成
                 waitKLine();
                 //for report
                 exportReportExcel.exportCycle(cycle.getName(), cycleIndex);
@@ -250,42 +258,12 @@ namespace FuturesBackTestExportTool
                                 exportReportExcel.exportReport(modelReport, cycleIndex);
                                 continue;
                             }
-                            //容错，尽可能的等待K线绘制完成
-                            waitKLine();
-                            //试3次，容错（有时候获取不到报告，报告就一行提示信息）
-                            int collectionReportCount = 0;
-                            bool collectionReportSuccess = false;
-                            bool chooseStartingEndingTimeSuccess = true;
-                            while (collectionReportCount < 3)
-                            {
-                                collectionReportCount++;
-                                //5.选择起止时间  TODO这里暂时这样处理，多测试再分析吧
-                                int startingEndingDateWarningCode;
-                                if (!chooseStartingEndingTime(startingEndingDate, out startingEndingDateWarningCode))
-                                {
-                                    //选择时间出错，跳出容错循环
-                                    chooseStartingEndingTimeSuccess = false;
-                                    break;
-                                }
-                                modelReport.warning = startingEndingDateWarningCode != WarningCode.NO_WARNING;
-
-                                //6.点击“回测报告”按钮，跳转到回测页面，获取数据
-                                if (!collectionReport(modelReport))
-                                {
-                                    continue;
-                                }
-                                collectionReportSuccess = true;
-                                break;
-                            }
-                            if (!chooseStartingEndingTimeSuccess)
+                            modelReport.warning = startingEndingDateWarningCode != WarningCode.NO_WARNING;
+                            //6.点击“回测报告”按钮，跳转到回测页面，获取数据
+                            if (!collectionReport(modelReport))
                             {
                                 exportReportExcel.exportReport(modelReport, cycleIndex);
                                 continue;
-                            }
-
-                            if (!collectionReportSuccess)
-                            {
-                                //Console.WriteLine("获取回测报告失败");
                             }
                             exportReportExcel.exportReport(modelReport, cycleIndex);
                         }
@@ -977,12 +955,14 @@ namespace FuturesBackTestExportTool
                 if (!isGraduallyBackTest)
                 {
                     clickReportButtonCount++;
-                    if (clickReportButtonCount >= 5)
+                    if (clickReportButtonCount >= 3)
                     {
                         break;
                     }
                 }
-                Thread.Sleep(3000);
+                //TODO 改成等1.5秒，原来3秒
+
+                Thread.Sleep(1500);
                 WindowsApiUtils.clearOtherWindows(mainHandle, null);
 
                 if (!SimulateOperating.clickButton(buttonHuiceBaogao))
@@ -1052,7 +1032,8 @@ namespace FuturesBackTestExportTool
         private void waitKLine()
         {
             int count = 0;
-            while (count < 10)
+            //TODO 原来重试10次，改成重试5次
+            while (count < 5)
             {
                 WindowsApiUtils.clearOtherWindows(mainHandle, null);
                 count++;
@@ -1877,7 +1858,7 @@ namespace FuturesBackTestExportTool
             {
                 foreach (AutomationElement modelAE in modelElementCollection)
                 {
-                    if (modelAE.Current.Name.Equals(modelName.Replace(" RUMI","")))
+                    if (modelAE.Current.Name.Equals(modelName.Replace(" RUMI", "")))
                     {
                         if (SimulateOperating.selectTreeItem(modelAE))
                         {
