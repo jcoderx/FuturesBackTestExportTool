@@ -77,67 +77,67 @@ namespace FuturesBackTestExportTool
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 1);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("信号计算开始时间");
+            cell.SetCellValue("信号个数");
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 2);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("信号计算结束时间");
+            cell.SetCellValue("最终权益");
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 3);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("信号个数");
+            cell.SetCellValue("夏普比率");
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 4);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("最终权益");
+            cell.SetCellValue("权益最大回撤");
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 5);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("夏普比率");
+            cell.SetCellValue("权益最大回撤比");
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 6);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("权益最大回撤");
+            cell.SetCellValue("风险率");
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 7);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("权益最大回撤比");
+            cell.SetCellValue("每手最大亏损");
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 8);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("风险率");
+            cell.SetCellValue("每手平均盈亏");
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 9);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("每手最大亏损");
+            cell.SetCellValue("胜率");
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 10);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("每手平均盈亏");
+            cell.SetCellValue("模型得分");
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 11);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("胜率");
+            cell.SetCellValue("最大盈利");
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 12);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("模型得分");
+            cell.SetCellValue("最大亏损");
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 13);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("最大盈利");
+            cell.SetCellValue("最大持续盈利次数");
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 14);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("最大亏损");
+            cell.SetCellValue("最大持续亏损次数");
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 15);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("最大持续盈利次数");
+            cell.SetCellValue("信号计算开始时间");
 
             cell = (XSSFCell)row.CreateCell(colStartIndex + 16);
             cell.CellStyle = titleStyle;
-            cell.SetCellValue("最大持续亏损次数");
+            cell.SetCellValue("信号计算结束时间");
 
             if (cycleIndex % 2 == 0)
             {
@@ -206,7 +206,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.startingDate);
+                    cell.SetCellValue(modelReport.signalNumber);
                 }
 
                 cell = (XSSFCell)row.CreateCell(colStartIndex + 2);
@@ -217,7 +217,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.endingDate);
+                    cell.SetCellValue(modelReport.lastInterest);
                 }
 
                 cell = (XSSFCell)row.CreateCell(colStartIndex + 3);
@@ -228,7 +228,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.signalNumber);
+                    cell.SetCellValue(modelReport.sharpeRatio);
                 }
 
                 cell = (XSSFCell)row.CreateCell(colStartIndex + 4);
@@ -239,7 +239,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.lastInterest);
+                    cell.SetCellValue(modelReport.interestMaxRetracement);
                 }
 
                 cell = (XSSFCell)row.CreateCell(colStartIndex + 5);
@@ -250,7 +250,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.sharpeRatio);
+                    cell.SetCellValue(modelReport.interestMaxRetracementRatio);
                 }
 
                 cell = (XSSFCell)row.CreateCell(colStartIndex + 6);
@@ -261,7 +261,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.interestMaxRetracement);
+                    cell.SetCellValue(modelReport.hazardRatio);
                 }
 
                 cell = (XSSFCell)row.CreateCell(colStartIndex + 7);
@@ -272,7 +272,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.interestMaxRetracementRatio);
+                    cell.SetCellValue(modelReport.maxLossPerHand);
                 }
 
                 cell = (XSSFCell)row.CreateCell(colStartIndex + 8);
@@ -283,7 +283,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.hazardRatio);
+                    cell.SetCellValue(modelReport.avgProfitLossPerHand);
                 }
 
                 cell = (XSSFCell)row.CreateCell(colStartIndex + 9);
@@ -294,7 +294,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.maxLossPerHand);
+                    cell.SetCellValue(modelReport.winRatio);
                 }
 
                 cell = (XSSFCell)row.CreateCell(colStartIndex + 10);
@@ -305,7 +305,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.avgProfitLossPerHand);
+                    cell.SetCellValue(modelReport.score);
                 }
 
                 cell = (XSSFCell)row.CreateCell(colStartIndex + 11);
@@ -316,7 +316,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.winRatio);
+                    cell.SetCellValue(modelReport.maxProfit);
                 }
 
                 cell = (XSSFCell)row.CreateCell(colStartIndex + 12);
@@ -327,7 +327,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.score);
+                    cell.SetCellValue(modelReport.maxLoss);
                 }
 
                 cell = (XSSFCell)row.CreateCell(colStartIndex + 13);
@@ -338,7 +338,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.maxProfit);
+                    cell.SetCellValue(modelReport.maxContinuousProfitabilityTimes);
                 }
 
                 cell = (XSSFCell)row.CreateCell(colStartIndex + 14);
@@ -349,7 +349,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.maxLoss);
+                    cell.SetCellValue(modelReport.maxContinuousLossesTimes);
                 }
 
                 cell = (XSSFCell)row.CreateCell(colStartIndex + 15);
@@ -360,7 +360,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.maxContinuousProfitabilityTimes);
+                    cell.SetCellValue(modelReport.startingDate);
                 }
 
                 cell = (XSSFCell)row.CreateCell(colStartIndex + 16);
@@ -371,7 +371,7 @@ namespace FuturesBackTestExportTool
                 }
                 else
                 {
-                    cell.SetCellValue(modelReport.maxContinuousLossesTimes);
+                    cell.SetCellValue(modelReport.endingDate);
                 }
 
                 if (cycleIndex % 2 == 0)
@@ -393,41 +393,41 @@ namespace FuturesBackTestExportTool
         private void setColumnWidth(XSSFSheet sheet)
         {
             sheet.SetColumnWidth(0, 20 * 256);
-            sheet.SetColumnWidth(1, 14 * 256);
-            sheet.SetColumnWidth(2, 14 * 256);
+            sheet.SetColumnWidth(1, 10 * 256);
+            sheet.SetColumnWidth(2, 10 * 256);
             sheet.SetColumnWidth(3, 10 * 256);
-            sheet.SetColumnWidth(4, 10 * 256);
-            sheet.SetColumnWidth(5, 10 * 256);
-            sheet.SetColumnWidth(6, 11 * 256);
-            sheet.SetColumnWidth(7, 13 * 256);
-            sheet.SetColumnWidth(8, 6 * 256);
-            sheet.SetColumnWidth(9, 11 * 256);
-            sheet.SetColumnWidth(10, 11 * 256);
-            sheet.SetColumnWidth(11, 7 * 256);
-            sheet.SetColumnWidth(12, 7 * 256);
-            sheet.SetColumnWidth(13, 10 * 256);
-            sheet.SetColumnWidth(14, 10 * 256);
-            sheet.SetColumnWidth(15, 15 * 256);
-            sheet.SetColumnWidth(16, 15 * 256);
+            sheet.SetColumnWidth(4, 11 * 256);
+            sheet.SetColumnWidth(5, 13 * 256);
+            sheet.SetColumnWidth(6, 6 * 256);
+            sheet.SetColumnWidth(7, 11 * 256);
+            sheet.SetColumnWidth(8, 11 * 256);
+            sheet.SetColumnWidth(9, 7 * 256);
+            sheet.SetColumnWidth(10, 7 * 256);
+            sheet.SetColumnWidth(11, 10 * 256);
+            sheet.SetColumnWidth(12, 10 * 256);
+            sheet.SetColumnWidth(13, 15 * 256);
+            sheet.SetColumnWidth(14, 15 * 256);
+            sheet.SetColumnWidth(15, 14 * 256);
+            sheet.SetColumnWidth(16, 14 * 256);
             sheet.SetColumnWidth(17, 6 * 256);
 
-            sheet.SetColumnWidth(18, 10 * 256);
-            sheet.SetColumnWidth(19, 14 * 256);
-            sheet.SetColumnWidth(20, 14 * 256);
+            sheet.SetColumnWidth(18, 20 * 256);
+            sheet.SetColumnWidth(19, 10 * 256);
+            sheet.SetColumnWidth(20, 10 * 256);
             sheet.SetColumnWidth(21, 10 * 256);
-            sheet.SetColumnWidth(22, 10 * 256);
-            sheet.SetColumnWidth(23, 10 * 256);
-            sheet.SetColumnWidth(24, 11 * 256);
-            sheet.SetColumnWidth(25, 13 * 256);
-            sheet.SetColumnWidth(26, 6 * 256);
-            sheet.SetColumnWidth(27, 11 * 256);
-            sheet.SetColumnWidth(28, 11 * 256);
-            sheet.SetColumnWidth(29, 7 * 256);
-            sheet.SetColumnWidth(30, 7 * 256);
-            sheet.SetColumnWidth(31, 10 * 256);
-            sheet.SetColumnWidth(32, 10 * 256);
-            sheet.SetColumnWidth(33, 15 * 256);
-            sheet.SetColumnWidth(34, 15 * 256);
+            sheet.SetColumnWidth(22, 11 * 256);
+            sheet.SetColumnWidth(23, 13 * 256);
+            sheet.SetColumnWidth(24, 6 * 256);
+            sheet.SetColumnWidth(25, 11 * 256);
+            sheet.SetColumnWidth(26, 11 * 256);
+            sheet.SetColumnWidth(27, 7 * 256);
+            sheet.SetColumnWidth(28, 7 * 256);
+            sheet.SetColumnWidth(29, 10 * 256);
+            sheet.SetColumnWidth(30, 10 * 256);
+            sheet.SetColumnWidth(31, 15 * 256);
+            sheet.SetColumnWidth(32, 15 * 256);
+            sheet.SetColumnWidth(33, 14 * 256);
+            sheet.SetColumnWidth(34, 14 * 256);
         }
 
         private void initStyle(XSSFWorkbook workbook)
